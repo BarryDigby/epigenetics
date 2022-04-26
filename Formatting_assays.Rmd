@@ -1,0 +1,77 @@
+---
+title: "TCGA-PRAD formatting"
+author: "Barry"
+date: "4/26/2022"
+output: html_document
+---
+
+# miRNA Staging
+
+```{R, quiet=T, warning=F}
+library(data.table)
+
+generate_count_mat <- function(path, pattern) {
+    files = list.files(path, pattern, full.names = TRUE, recursive=TRUE, include.dirs=TRUE)
+    mat = as.data.frame(do.call(cbind, lapply(files, function(x) fread(x, stringsAsFactors = FALSE))))
+    rownames(mat) = mat[,1]
+    mat = as.data.frame(mat[, seq(2, ncol(mat), 4)])
+    return(mat)
+}
+
+# stage raw counts
+mirna_counts <- generate_count_mat("/data/TCGA-PRAD/mirna", "\\.mirbase21.mirnas.quantification.txt$")
+```
+
+```{R}
+# append metadata to counts mat
+library(tidyverse)
+file_names <- list.files("/data/TCGA-PRAD/mirna", "\\.mirbase21.mirnas.quantification.txt$", full.names = FALSE, recursive = TRUE, include.dirs = FALSE)
+file_names <- sub(".*/", "", file_names)
+samplesheet <- read.table("/data/TCGA-PRAD/mirna_meta/mirna_samplesheet.tsv", header=T, sep="\t")
+samplesheet <- samplesheet[match(file_names, samplesheet$File.Name),]
+colnames(mirna_counts) <- samplesheet$Sample.ID
+mirna_meta <- subset(samplesheet, select=c(Sample.ID, Sample.Type))
+rownames(mirna_meta) <- NULL
+mirna_meta <- column_to_rownames(mirna_meta, var="Sample.ID")
+```
+
+
+Append clinical meta (awk'ed in terminal first) 
+Command used:
+```bash
+awk -v OFS="\t" 'BEGIN {FS="\t"}; {print $1,$2,$4,$15,$29}' clinical.tsv | tr ' ' '_' | sed "s/'--/NA/" > trimmed_clinical.tsv
+```
+Logic:
+* tr to fix race, sed to fix '-- for non entry in T2c.. T2b
+
+```{R}
+# entries are duplicated (follow up?) but we only need one line. 
+clinical <- read.table("/data/TCGA-PRAD/mirna_meta/trimmed_clinical.tsv", header=T)
+clinical <- unique(clinical)
+```
+
+Now we have 494 patients, must match to samplesheet and subset counts and then we are finished..
+
+```{R}
+key <- clinical$case_submitter_id
+samplesheet <- samplesheet[match(key, samplesheet$Case.ID),]
+key <- samplesheet$Sample.ID
+mirna_counts <- mirna_counts[,match(key, colnames(mirna_counts))]
+
+# now merge metadata
+master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
+master <- master[,c(1:5, 11:12)]
+rownames(master) <- master$Sample.ID
+rownames(master) == colnames(mirna_counts)
+master <- master[match(colnames(mirna_counts), rownames(master)),]
+rownames(master) == colnames(mirna_counts)
+```
+
+Tidy and export.
+
+```{R}
+rm(mirna_meta, samplesheet, clinical, key, file_names)
+mirna_meta <- master
+rm(master)
+save.image(file = "/data/TCGA-PRAD/mirna_meta/mirna.RData")
+```
