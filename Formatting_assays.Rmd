@@ -50,13 +50,13 @@ clinical <- read.table("/data/TCGA-PRAD/mirna_meta/trimmed_clinical.tsv", header
 clinical <- unique(clinical)
 ```
 
-Now we have 494 patients, must match to samplesheet and subset counts and then we are finished..
+Now we have 497 patients, must match to samplesheet and subset counts and then we are finished..
 
 ```{R}
 key <- clinical$case_submitter_id
 samplesheet <- samplesheet[match(key, samplesheet$Case.ID),]
 key <- samplesheet$Sample.ID
-mirna_counts <- mirna_counts[,match(key, colnames(mirna_counts))]
+mrna_counts <- mrna_counts[,match(key, colnames(mrna_counts))]
 
 # now merge metadata
 master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
@@ -70,8 +70,77 @@ rownames(master) == colnames(mirna_counts)
 Tidy and export.
 
 ```{R}
-rm(mirna_meta, samplesheet, clinical, key, file_names)
+rm(mrna_meta, samplesheet, clinical, key, file_names)
 mirna_meta <- master
 rm(master)
 save.image(file = "/data/TCGA-PRAD/mirna_meta/mirna.RData")
+```
+
+
+# mRNA Staging
+
+very memory intensive step!
+
+```{R}
+library(data.table)
+
+generate_count_mat <- function(path, pattern) {
+    files = list.files(path, pattern, full.names = TRUE, recursive=TRUE, include.dirs=TRUE)
+    mat = as.data.frame(do.call(cbind, lapply(files, function(x) fread(x, stringsAsFactors = FALSE))))
+    mat <- mat[-c(1:4),]
+    gene_type <- as.character(mat[,3])
+    rownames(mat) = mat[,1]
+    mat = as.data.frame(mat[, seq(4, ncol(mat), 9)])
+    mat$gene_type <- gene_type
+    mat <- subset(mat, mat$gene_type == "protein_coding")
+    mat <- mat[,-c(ncol(mat))]
+    return(mat)
+}
+
+# stage raw counts
+mrna_counts <- generate_count_mat("/data/TCGA-PRAD/mrna", "\\.rna_seq.augmented_star_gene_counts.tsv$")
+```
+
+```{R}
+library(tidyverse)
+file_names <- list.files("/data/TCGA-PRAD/mrna", "\\.rna_seq.augmented_star_gene_counts.tsv$", full.names = FALSE, recursive = TRUE, include.dirs = FALSE)
+file_names <- sub(".*/", "", file_names)
+samplesheet <- read.table("/data/TCGA-PRAD/mrna_meta/mrna_samplesheet.tsv", header=T, sep="\t")
+samplesheet <- samplesheet[match(file_names, samplesheet$File.Name),]
+colnames(mrna_counts) <- samplesheet$Sample.ID
+mrna_meta <- subset(samplesheet, select=c(Sample.ID, Sample.Type))
+rownames(mrna_meta) <- NULL
+mrna_meta <- column_to_rownames(mrna_meta, var="Sample.ID")
+```
+
+```{R}
+# entries are duplicated (follow up?) but we only need one line. 
+clinical <- read.table("/data/TCGA-PRAD/mrna_meta/trimmed_clinical.tsv", header=T)
+clinical <- unique(clinical)
+```
+
+Now we have 494 patients, must match to samplesheet and subset counts and then we are finished..
+
+```{R}
+key <- clinical$case_submitter_id
+samplesheet <- samplesheet[match(key, samplesheet$Case.ID),]
+key <- samplesheet$Sample.ID
+mirna_counts <- mirna_counts[,match(key, colnames(mirna_counts))]
+
+# now merge metadata
+master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
+master <- master[,c(1:5, 11:12)]
+rownames(master) <- master$Sample.ID
+rownames(master) == colnames(mrna_counts)
+master <- master[match(colnames(mrna_counts), rownames(master)),]
+rownames(master) == colnames(mrna_counts)
+```
+
+Tidy and export.
+
+```{R}
+rm(mrna_meta, samplesheet, clinical, key, file_names)
+mrna_meta <- master
+rm(master)
+save.image(file = "/data/TCGA-PRAD/mrna_meta/mrna.RData")
 ```
