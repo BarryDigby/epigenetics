@@ -53,11 +53,6 @@ clinical <- unique(clinical)
 Now we have 497 patients, must match to samplesheet and subset counts and then we are finished..
 
 ```{R}
-key <- clinical$case_submitter_id
-samplesheet <- samplesheet[match(key, samplesheet$Case.ID),]
-key <- samplesheet$Sample.ID
-mrna_counts <- mrna_counts[,match(key, colnames(mrna_counts))]
-
 # now merge metadata
 master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
 master <- master[,c(1:5, 11:12)]
@@ -119,14 +114,9 @@ clinical <- read.table("/data/TCGA-PRAD/mrna_meta/trimmed_clinical.tsv", header=
 clinical <- unique(clinical)
 ```
 
-Now we have 494 patients, must match to samplesheet and subset counts and then we are finished..
+match to samplesheet and subset counts and then we are finished..
 
 ```{R}
-key <- clinical$case_submitter_id
-samplesheet <- samplesheet[match(key, samplesheet$Case.ID),]
-key <- samplesheet$Sample.ID
-mirna_counts <- mirna_counts[,match(key, colnames(mirna_counts))]
-
 # now merge metadata
 master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
 master <- master[,c(1:5, 11:12)]
