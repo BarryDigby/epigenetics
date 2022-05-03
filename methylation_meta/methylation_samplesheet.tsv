@@ -1,4 +1,4 @@
-File ID	File Name	Data Category	Data Type	Project ID	Case ID	Sample ID	Sample Type
+File_ID	File_Name	Data_Category	Data_Type	Project_ID	Case_ID	Sample_ID	Sample_Type
 1ea2e9c8-2b46-4e63-8ab0-2fe141dd05a4	d86c65e4-30b0-4b59-9030-917b6cb0204e_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-PRAD	TCGA-CH-5762	TCGA-CH-5762-11A	Solid Tissue Normal
 464be3fb-a9dd-4b38-83e6-33220467c44a	d86c65e4-30b0-4b59-9030-917b6cb0204e_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-PRAD	TCGA-CH-5762	TCGA-CH-5762-11A	Solid Tissue Normal
 5b71ace8-b25e-4320-8a29-2f36845c4b67	992b4dcc-ea3d-438e-ab3c-19d870b425e1_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-PRAD	TCGA-XK-AAK1	TCGA-XK-AAK1-01A	Primary Tumor

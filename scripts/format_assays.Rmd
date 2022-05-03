@@ -134,3 +134,42 @@ mrna_meta <- master
 rm(master)
 save.image(file = "/data/TCGA-PRAD/mrna_meta/mrna.RData")
 ```
+
+# Methylation Staging
+
+
+```{R}
+library(minfi)
+# time consuming proc
+#rgSet <- read.metharray.exp("/data/TCGA-PRAD/methylation")
+#save.image("/data/TCGA-PRAD/methylation_meta/rgSet.RData")
+
+load("/data/TCGA-PRAD/methylation_meta/rgSet.RData")
+```
+
+# append sample ID as colnames, not filename
+
+```{R}
+samplesheet <- read.table("/data/TCGA-PRAD/methylation_meta/methylation_samplesheet.tsv", header=T, stringsAsFactors = T, sep="\t")
+samplesheet$sanity <- gsub('.{9}$', '',samplesheet$File_Name)
+table(sampleNames(rgSet) == samplesheet$sanity)
+samplesheet <- samplesheet[match(sampleNames(rgSet), samplesheet$sanity),]
+
+#now rename columns 
+sampleNames(rgSet) <- samplesheet$Sample_ID
+```
+
+
+
+```{R}
+mSetSq <- preprocessQuantile(rgSet)
+```
+
+
+clinical <- read.table("/data/TCGA-PRAD/methylation_meta/trimmed_clinical.tsv", header=T, sep="\t")
+master <- merge(samplesheet, clinical, by.x = "Case_ID", by.y = "case_submitter_id")
+master <- unique(master)
+
+# match rgSet ordering to master, subset cols later.
+#grSet <- preprocessQuantile(rgSet)
+```
