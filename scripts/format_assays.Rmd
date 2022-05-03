@@ -157,19 +157,24 @@ samplesheet <- samplesheet[match(sampleNames(rgSet), samplesheet$sanity),]
 
 #now rename columns 
 sampleNames(rgSet) <- samplesheet$Sample_ID
+table(sampleNames(rgSet) == samplesheet$Sample_ID)
 ```
 
 
 
 ```{R}
 mSetSq <- preprocessQuantile(rgSet)
+rm(samplesheet)
+rm(rgSet)
+save.image(file = "/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
 ```
 
+```{R}
+samplesheet <- read.table("/data/TCGA-PRAD/methylation_meta/methylation_samplesheet.tsv", header=T, stringsAsFactors = T, sep="\t")
 
 clinical <- read.table("/data/TCGA-PRAD/methylation_meta/trimmed_clinical.tsv", header=T, sep="\t")
 master <- merge(samplesheet, clinical, by.x = "Case_ID", by.y = "case_submitter_id")
 master <- unique(master)
 
-# match rgSet ordering to master, subset cols later.
-#grSet <- preprocessQuantile(rgSet)
+# boil down the metadata to 553 , remove every second row or something more robust.
 ```
