@@ -57,9 +57,9 @@ Now we have 497 patients, must match to samplesheet and subset counts and then w
 master <- merge(clinical, samplesheet, by.x = "case_submitter_id", by.y = "Case.ID")
 master <- master[,c(1:5, 11:12)]
 rownames(master) <- master$Sample.ID
-rownames(master) == colnames(mirna_counts)
+table(rownames(master) == colnames(mirna_counts))
 master <- master[match(colnames(mirna_counts), rownames(master)),]
-rownames(master) == colnames(mirna_counts)
+table(rownames(master) == colnames(mirna_counts))
 ```
 
 Tidy and export.
@@ -135,16 +135,16 @@ rm(master)
 save.image(file = "/data/TCGA-PRAD/mrna_meta/mrna.RData")
 ```
 
-# Methylation Staging
 
+# Methylation Staging
 
 ```{R}
 library(minfi)
 # time consuming proc
 #rgSet <- read.metharray.exp("/data/TCGA-PRAD/methylation")
 #save.image("/data/TCGA-PRAD/methylation_meta/rgSet.RData")
-
 load("/data/TCGA-PRAD/methylation_meta/rgSet.RData")
+head(sampleNames(rgSet))
 ```
 
 # append sample ID as colnames, not filename
@@ -160,21 +160,25 @@ sampleNames(rgSet) <- samplesheet$Sample_ID
 table(sampleNames(rgSet) == samplesheet$Sample_ID)
 ```
 
-
-
+# normalise, format metadata and save to file
 ```{R}
-mSetSq <- preprocessQuantile(rgSet)
-rm(samplesheet)
-rm(rgSet)
-save.image(file = "/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
+#mSetSq <- preprocessQuantile(rgSet)
+# check colname preservation
+#rm(rgSet)
+load("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
+table(sampleNames(mSetSq) == samplesheet$Sample_ID)
+clinical <- read.table("/data/TCGA-PRAD/methylation_meta/trimmed_clinical.tsv", header=T, sep="\t")
+master <- merge(samplesheet, clinical, by.x = "Case_ID", by.y = "case_submitter_id")
+master <- master[seq(1, nrow(master), 2),]
+master <- master[match(samplesheet$Sample_ID, master$Sample_ID),]
+table(sampleNames(mSetSq) == master$Sample_ID)
 ```
 
 ```{R}
-samplesheet <- read.table("/data/TCGA-PRAD/methylation_meta/methylation_samplesheet.tsv", header=T, stringsAsFactors = T, sep="\t")
-
-clinical <- read.table("/data/TCGA-PRAD/methylation_meta/trimmed_clinical.tsv", header=T, sep="\t")
-master <- merge(samplesheet, clinical, by.x = "Case_ID", by.y = "case_submitter_id")
-master <- unique(master)
-
-# boil down the metadata to 553 , remove every second row or something more robust.
+methyl_meta <- master
+rownames(methyl_meta) <- methyl_meta$Sample_ID
+methyl_meta <- methyl_meta[,c(1, 10,11,12,13,7,8)]
+rm(master, clinical, rgSet, samplesheet)
+# reproducibility note: objects may be out of order in this code block. 
+save.image(file = "/data/TCGA-PRAD/methylation_meta/methyl.RData")
 ```

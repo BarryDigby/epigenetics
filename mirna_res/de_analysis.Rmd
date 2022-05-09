@@ -1,0 +1,148 @@
+---
+title: "mirna_analysis"
+author: "Barry"
+date: "5/4/2022"
+output: html_document
+---
+
+```{R}
+library(DESeq2)
+library(ggpubr)
+library(biomaRt)
+
+get_upregulated <- function(df){
+
+	key <- intersect(rownames(df)[which(df$log2FoldChange>=0.5)], rownames(df)[which(df$padj<=0.05)])
+
+    results <- as.data.frame((df)[which(rownames(df) %in% key),])
+	return(results)
+}
+
+get_downregulated <- function(df){
+
+  	key <- intersect(rownames(df)[which(df$log2FoldChange<=-0.5)], rownames(df)[which(df$padj<=0.05)])
+
+  	results <- as.data.frame((df)[which(rownames(df) %in% key),])
+  	return(results)
+}
+```
+
+# stage data and perform EDA.
+
+Drop the metastatic sample here
+```{R}
+load("/data/TCGA-PRAD/mirna_meta/mirna.RData")
+
+mirna_counts <- mirna_counts[ , -which(names(mirna_counts) %in% c("TCGA-V1-A9O5-06A"))]
+mirna_meta <- mirna_meta[!(mirna_meta$Sample.ID == "TCGA-V1-A9O5-06A"),]
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Solid Tissue Normal", "Normal", mirna_meta$Sample.Type)
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Primary Tumor", "Tumor", mirna_meta$Sample.Type)
+```
+
+
+```{R}
+library(DESeq2)
+library(IHW)
+library(apeglm)
+
+dds <- DESeqDataSetFromMatrix(mirna_counts, mirna_meta, design = ~ Sample.Type)
+dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
+dds <- DESeq(dds)
+resultsNames(dds)
+
+res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
+lfc_res <- lfcShrink(dds=dds, res=res, coef=2, type="apeglm")
+res_df <- as.data.frame(lfc_res)
+#plotCounts(dds, "hsa-mir-5704", intgroup = "Sample.Type") # sanity check of fold change direction.
+up <- get_upregulated(res_df)
+down <- get_downregulated(res_df)
+
+de_mirs <- rbind(up,down)
+```
+
+# Annotate with genomic locations for Circos etc.
+
+```{R}
+library(biomaRt)
+mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+
+info <- getBM(attributes=c("mirbase_id",
+                               "ensembl_gene_id_version",
+                               "chromosome_name",
+                               "start_position",
+                               "end_position",
+                               "strand"),
+                  filters = c("mirbase_id"),
+                  values = rownames(de_mirs),
+                  mart = mart,
+                  useCache=FALSE)
+
+info$strand <- gsub("-1", "-", info$strand)
+info$strand <- gsub("1", "+", info$strand)
+
+## Alt chroms account for duplicated mir IDS. 
+info <- info[!grepl("CHR_", info$chromosome_name),]
+
+de_mirs$mirbase_id <- rownames(de_mirs)
+de_mirs <- merge(de_mirs, info, by = "mirbase_id")
+de_mirs <- de_mirs[,c(1,3,5:11)]
+write.table(de_mirs, "/data/TCGA-PRAD/mirna_res/de_mirs.txt", row.names = F, sep="\t", quote=F)
+```
+
+```{R}
+load("/data/TCGA-PRAD/mrna_meta/mrna.RData")
+
+mrna_counts <- mrna_counts[ , -which(names(mrna_counts) %in% c("TCGA-V1-A9O5-06A"))]
+mrna_meta <- mrna_meta[!(mrna_meta$Sample.ID == "TCGA-V1-A9O5-06A"),]
+mrna_meta$Sample.Type <- ifelse(mrna_meta$Sample.Type == "Solid Tissue Normal", "Normal", mrna_meta$Sample.Type)
+mrna_meta$Sample.Type <- ifelse(mrna_meta$Sample.Type == "Primary Tumor", "Tumor", mrna_meta$Sample.Type)
+```
+
+```{R}
+dds <- DESeqDataSetFromMatrix(mrna_counts, mrna_meta, design = ~ Sample.Type)
+dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
+dds <- DESeq(dds)
+resultsNames(dds)
+
+res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
+lfc_res <- lfcShrink(dds=dds, res=res, coef=2, type="apeglm")
+res_df <- as.data.frame(lfc_res)
+#plotCounts(dds, "ENSG00000122133.17", intgroup = "Sample.Type") # sanity check of fold change direction.
+up <- get_upregulated(res_df)
+down <- get_downregulated(res_df)
+
+de_genes <- rbind(up,down)
+```
+
+```{R}
+library(biomaRt)
+mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+
+rownames(de_genes) <- sub("\\..*", "", rownames(de_genes))
+
+info <- getBM(attributes=c("hgnc_symbol",
+                           "ensembl_gene_id",
+                           "ensembl_gene_id_version",
+                               "chromosome_name",
+                               "start_position",
+                               "end_position",
+                               "strand"),
+                  filters = c("ensembl_gene_id"),
+                  values = rownames(de_genes),
+                  mart = mart,
+                  useCache=FALSE)
+
+info$strand <- gsub("-1", "-", info$strand)
+info$strand <- gsub("1", "+", info$strand)
+
+# missing 6, cant retrieve info (crucial for CPG overlaps) so must settle and discard these. 
+de_genes$ensembl_gene_id <- rownames(de_genes)
+#info <- subset(info, select=-c(ensembl_gene_id))
+info$strand <- gsub("-1", "-", info$strand)
+info$strand <- gsub("1", "+", info$strand)
+
+
+de_genes <- merge(de_genes, info, by = "ensembl_gene_id")
+de_genes <- de_genes[,c(7,3,5,6,8:12)]
+write.table(de_genes, "/data/TCGA-PRAD/mrna_res/de_genes.txt", row.names = F, sep="\t", quote=F)
+```

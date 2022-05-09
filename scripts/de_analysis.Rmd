@@ -1,0 +1,88 @@
+---
+title: "mirna_analysis"
+author: "Barry"
+date: "5/4/2022"
+output: html_document
+---
+
+```{R}
+library(DESeq2)
+library(ggpubr)
+library(biomaRt)
+```
+
+# stage data and perform EDA.
+
+Drop the metastatic sample here
+```{R}
+load("/data/TCGA-PRAD/mirna_meta/mirna.RData")
+
+mirna_counts <- mirna_counts[ , -which(names(mirna_counts) %in% c("TCGA-V1-A9O5-06A"))]
+mirna_meta <- mirna_meta[!(mirna_meta$Sample.ID == "TCGA-V1-A9O5-06A"),]
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Solid Tissue Normal", "Normal", mirna_meta$Sample.Type)
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Primary Tumor", "Tumor", mirna_meta$Sample.Type)
+```
+
+
+```{R}
+dds <- DESeqDataSetFromMatrix(mirna_counts, mirna_meta, design = ~ Sample.Type)
+dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
+dds <- DESeq(dds)
+resultsNames(dds)
+
+res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
+summary(res)
+res_df <- as.data.frame(res)
+```
+
+```{R}
+t_cts <- t(mirna_counts)
+# issues with scale because some columns have constant values (i.e are all zeros)
+t_cts = t_cts[,colSums(t_cts) > 600]
+PCA <- prcomp(t_cts, scale = T, center = T)
+
+percentVar <- round(100*PCA$sdev^2/sum(PCA$sdev^2),1)
+sd_ratio <- sqrt(percentVar[2] / percentVar[1])
+
+dataGG <- data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2],
+                     Sample_Type = mirna_meta$Sample.Type,
+                     Race = mirna_meta$race,
+                     AJCC = mirna_meta$ajcc_pathologic_t)
+
+ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
+                  color = "Sample_Type", palette = c("dodgerblue4", "darkorange2"),
+                  title = "PRAD miRNA PCA Plot", shape = "AJCC",
+                  xlab = paste0("PC1, VarExp: ", percentVar[1], "%"),
+                  ylab = paste0("PC2, VarExp: ", percentVar[2], "%"),
+                  legend.title = "Patient Sample Type: ", legend="top",
+                  ellipse = TRUE, star.plot = FALSE, ggtheme = theme_bw()) + font("title", face="italic") +
+                  theme(plot.title = element_text(hjust = 0.0))
+```
+
+
+
+```{R}
+# Load data
+data("mtcars")
+my_data <- mtcars[, c(1,3,4,5,6,7)]
+# print the first 6 rows
+head(my_data, 6)
+
+library("PerformanceAnalytics")
+my_data <- mtcars[, c(1,3,4,5,6,7)]
+
+
+colnames(my_data) <- c("CXCL12", "PTEN", "C13orf25", "hsa-miR-125", "hsa-miR-455", "hsa-miR-75-5p")
+rownames(my_data) <- seq(1, 32)
+
+my_data <- as.data.frame(scale(my_data, scale=T, center = F))
+
+chart.Correlation(my_data, histogram=TRUE, pch=19)
+
+res <- cor(my_data)
+
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+heatmap(x = res, col = col, symm = TRUE)
+
+ggscatter(my_data, x="CXCL12", y="hsa-miR-455", cor.coef = T, cor.method = "pearson", add = "reg.line")
+```
