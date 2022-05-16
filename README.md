@@ -100,3 +100,30 @@ Pearsons R2 correlation was computed between Principal Components 1:10 of varian
 
 </details>
 </details>
+
+<details open>
+<summary> Differential Expression Analysis</summary>
+<br>
+
+<details open>
+<summary>DE miRNA</summary>
+<br>
+
+Differential expression analsis was conducted using `DESeq2` contrasting `Tumor` vs `Normal` samples in the TCGA-PRAD cohort. Robust results were generated using the `IHW` filter function for multiple correction testing, followed by `apeglm` shrinkage correction to penalize differentially expressed miRNAs with high variance. 
+
+miRNAs passing strict filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) were selected for downstream analysis (`upregulated: 121, downregulated: 135`).
+
+</details>
+
+<details open>
+<summary>DE mRNA</summary>
+<br>
+
+</details>
+
+<details open>
+<summary>DE Methylation</summary>
+<br>
+
+</details>
+</details>
