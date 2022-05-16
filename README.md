@@ -55,4 +55,6 @@ The mRNA Analysis pipeline begins with the Alignment Workflow, which is performe
 
 When staging the gene level counts, the `unstranded` column was selected to create the gene expression matrix for `TCGA-PRAD` (`scripts/1.format_assays.Rmd`: # 2. mRNA staging).
 
+Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` and 500 `Tumor` samples.
+
 ***
