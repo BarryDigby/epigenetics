@@ -2,10 +2,12 @@
 
 miRNA expression and DNA methylation data from `TCGA-PRAD` were integrated via correlation analysis termed miRNA-methylation Quantitative Trait Loci (`mimQTL`) analysis. mRNA expression data was downloaded to assess the relationship between significant `mimQTLs` and gene expression in `PRAD`.
 <details>
-<summary><header>Dataset staging</header></summary>
+<summary>Dataset staging</summary>
 <br>
 
-### miRNA expression
+<details open>
+<summary>miRNA expression</summary>
+<br>
 
 `TCGA-PRAD` miRNA counts were downloaded from the GDC portal:
 
@@ -23,8 +25,11 @@ Subsequent to the download of individual miRNA expression data, the data was mer
 
 The `Metastatic` sample was removed, resulting in 52 `Normals` and 498 `Tumor` samples.
 ***
+</details>
 
-### DNA methylation
+<details open>
+<summary>DNA methylation</summary>
+<br>
 
 Raw DNA methylation data from `TCGA-PRAD` was downloaded from the GDC portal:
 
@@ -42,7 +47,12 @@ The two Masked Methylation Array IDAT files were used in the analysis and proces
 
 The `Metastatic` sample was removed, resulting in 50 `Normal` samples and 502 `Tumor` samples.
 
-## mRNA expression
+***
+</details>
+
+<details open>
+<summary>mRNA expression</summary>
+<br>
 
 `TCGA-PRAD` mRNA expression data was downloaded from the GDC portal [link to full workflow available here](https://www.biostars.org/p/9500223/).
 
@@ -59,4 +69,5 @@ When staging the gene level counts, the `unstranded` column was selected to crea
 Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` and 500 `Tumor` samples.
 
 ***
+</details>
 </details>
