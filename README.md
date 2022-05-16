@@ -1,8 +1,9 @@
 # mimQTL Analysis
 
 miRNA expression and DNA methylation data from `TCGA-PRAD` were integrated via correlation analysis termed miRNA-methylation Quantitative Trait Loci (`mimQTL`) analysis. mRNA expression data was downloaded to assess the relationship between significant `mimQTLs` and gene expression in `PRAD`.
-
-## Dataset staging
+<details>
+<summary>## Dataset staging</summary>
+<br>
 
 ### miRNA expression
 
@@ -58,3 +59,4 @@ When staging the gene level counts, the `unstranded` column was selected to crea
 Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` and 500 `Tumor` samples.
 
 ***
+</details>
