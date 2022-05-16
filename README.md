@@ -80,7 +80,11 @@ Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` 
 <summary>miRNA EDA</summary>
 <br>
 
+Pearsons R2 correlation was computed between Principal Components 1:10 of variance stabilized miRNA expression data. Based on the results of the exploratory data analysis, the covariates 'age', 'ajcc tumor stage' and 'race' will not be included in the `DESeq2` generalized linear model. 
+
 ![Alt text](mirna_meta/PCA_corr.png?raw=true "R2 correlation PC:Metadata")
+
+![Alt text](mirna_meta/PCA_biplot.png?raw=true "PCA miRNA biplot")
 
 </details>
 
