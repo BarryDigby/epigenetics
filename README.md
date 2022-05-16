@@ -72,7 +72,7 @@ Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` 
 </details>
 </details>
 
-<details open>
+<details>
 <summary> Exploratory Data analysis</summary>
 <br>
 

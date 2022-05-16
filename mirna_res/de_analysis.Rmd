@@ -25,6 +25,7 @@ get_downregulated <- function(df){
   	results <- as.data.frame((df)[which(rownames(df) %in% key),])
   	return(results)
 }
+
 ```
 
 # stage data and perform EDA.
@@ -49,7 +50,18 @@ dds <- DESeqDataSetFromMatrix(mirna_counts, mirna_meta, design = ~ Sample.Type)
 dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
 dds <- DESeq(dds)
 resultsNames(dds)
+```
 
+# EDA
+
+```{R}
+mirna_vst <- vst(dds, blind=F)
+PCA <- PCAtools::pca(mirna_vst, metadata = meta, remove)
+
+```
+
+# RESULTS
+```{R}
 res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
 lfc_res <- lfcShrink(dds=dds, res=res, coef=2, type="apeglm")
 res_df <- as.data.frame(lfc_res)
