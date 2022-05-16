@@ -71,3 +71,26 @@ Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` 
 ***
 </details>
 </details>
+
+<details open>
+<summary> Exploratory Data analysis</summary>
+<br>
+
+<details open>
+<summary>miRNA EDA</summary>
+<br>
+
+</details>
+
+<details open>
+<summary>mRNA EDA</summary>
+<br>
+
+</details>
+
+<details open>
+<summary>DNA methylation EDA</summary>
+<br>
+
+</details>
+</details>

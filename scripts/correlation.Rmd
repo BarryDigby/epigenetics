@@ -37,8 +37,20 @@ dim(bVals)
 dim(mirna_counts)
 ```
 
-# correlation stats
+# subset to contain overlapping hits.
+
 ```{R}
+olap <- read.table("/data/TCGA-PRAD/bedtools/de-probes_olap_de-mirs.bed", header=F, sep="\t")
+probes <- olap$V4
+mirs <- olap$V9
+
+mirna_counts <- mirna_counts[mirs,]
+bVals <- bVals[probes,]
+```
+
+
+# correlation stats
+```{R, message=F, warning=F}
 tab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
 pvaltab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
 
@@ -56,4 +68,116 @@ rownames(tab) = rownames(bVals)
 colnames(tab) = rownames(mirna_counts)
 rownames(pvaltab) = rownames(bVals)
 colnames(pvaltab) = rownames(mirna_counts)
+```
+
+###############################################################################
+## keep significant correlations after Bonferroni correction
+###############################################################################
+
+```{R}
+par(mfrow=c(1,1))
+
+# expect non-uniform distribution
+hist(pvaltab, xlab = "correlation p-values")
+
+keep = pvaltab < 0.05/(nrow(pvaltab)*ncol(pvaltab))
+table(keep)
+
+sig.tab = c()
+for (i in 1:nrow(pvaltab)) {
+  for (j in 1:ncol(pvaltab)) {
+    if (pvaltab[i,j] < 0.05/(nrow(pvaltab)*ncol(pvaltab))) {
+      sig.tab = append(sig.tab,
+             list(data.frame(
+                CpG=rownames(pvaltab)[i],
+                miRNA=colnames(pvaltab)[j],
+                Spearman_pval=pvaltab[i,j],
+                Spearman_cor=tab[i,j])))
+    }
+  }
+}
+
+sig.tab <- do.call(rbind, sig.tab)
+head(sig.tab)
+dim(sig.tab)
+```
+
+###############################################################################
+## making a matrix of significant p-values with pos or neg correlation indicated
+###############################################################################
+
+```{R}
+# make a matrix object out of input data, e.g. all significant CpGs in rows and
+# all significant miRNAs in columns
+library(reshape2)
+d = reshape2::dcast(sig.tab, CpG ~ miRNA, value.var = "Spearman_cor")
+m = as.matrix(d[,-1])
+rownames(m) = d[,1]
+
+# convert to a -1/0/1 matrix
+m[m>0] =  1
+m[m<0] = -1
+m[is.na(m)] = 0
+```
+
+
+###############################################################################
+## Clustering with pheatmap
+###############################################################################
+
+```{R, fig.height=7, fig.width=6}
+mycolors = colorRampPalette(c("dodgerblue3","white", "firebrick1"))(n=299)
+
+# Correlation distance and average linkage
+pheatmap::pheatmap(m, clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         clustering_method = "average",
+         cutree_rows=5, cutree_cols=5, # decide number of clusters
+         annotation_colors = annotations_colors,
+         col = hcl.colors(50, "Viridis",rev=T),
+         show_rownames=TRUE,
+         show_colnames=TRUE)
+```
+
+###############################################################################
+# attempt to pull out 1-1 maps from bedtool result
+###############################################################################
+
+```{R}
+map <- data.frame(olap$V4, olap$V9)
+map$key <- paste(map$olap.V4, map$olap.V9, sep=":")
+
+sig.tab$key <- paste(sig.tab$CpG, sig.tab$miRNA, sep=":")
+
+sig.tab <- subset(sig.tab, sig.tab$key %in% map$key)
+```
+
+```{R}
+d = reshape2::dcast(sig.tab, CpG ~ miRNA, value.var = "Spearman_cor")
+m = as.matrix(d[,-1])
+rownames(m) = d[,1]
+
+# convert to a -1/0/1 matrix
+m[m>0] =  1
+m[m<0] = -1
+m[is.na(m)] = 0
+```
+
+
+###############################################################################
+## Clustering with pheatmap
+###############################################################################
+
+```{R, fig.height=5, fig.width=4}
+mycolors = colorRampPalette(c("dodgerblue3","white", "firebrick1"))(n=299)
+
+# Correlation distance and average linkage
+pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         clustering_method = "average",
+         cutree_rows=5, cutree_cols=5, # decide number of clusters
+         annotation_colors = annotations_colors,
+         col = hcl.colors(50, "Viridis",rev=T),
+         show_rownames=TRUE,
+         show_colnames=TRUE)
 ```
