@@ -80,6 +80,8 @@ Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` 
 <summary>miRNA EDA</summary>
 <br>
 
+![Alt text](mirna_meta/PCA_corr.png?raw=true "R2 correlation PC:Metadata")
+
 </details>
 
 <details open>
