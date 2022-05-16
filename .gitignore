@@ -1,6 +1,10 @@
 mrna/
+mrna/mrna.RData
 mirna/
 methylation/
 methylation_meta/rgSet.RData
 methylation_meta/mSetSq.RData
+methylation_meta/mSetSq_filt.RData
 methylation_meta/methyl.RData
+methylation_res/*.txt
+*RData

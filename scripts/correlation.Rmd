@@ -1,0 +1,59 @@
+---
+title: "cpg_mir_corr"
+author: "Barry"
+date: "5/13/2022"
+output: html_document
+---
+
+# load raw, de mirna cpg and normalise mats.
+
+```{R}
+load("/data/TCGA-PRAD/mirna_meta/mirna.RData")
+mirna_counts <- mirna_counts[ , -which(names(mirna_counts) %in% c("TCGA-V1-A9O5-06A"))]
+mirna_meta <- mirna_meta[!(mirna_meta$Sample.ID == "TCGA-V1-A9O5-06A"),]
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Solid Tissue Normal", "Normal", mirna_meta$Sample.Type)
+mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Primary Tumor", "Tumor", mirna_meta$Sample.Type)
+de_mirs <- read.table("/data/TCGA-PRAD/mirna_res/de_mirs.txt", header=T, sep="\t")
+
+mirna_counts <- mirna_counts[de_mirs$mirbase_id, ]
+mirna_counts <- scale(mirna_counts, center = F)
+```
+
+
+```{R}
+load("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
+rm(mVals, mSetSeq_flt)
+
+samps <- intersect(colnames(mirna_counts), colnames(bVals))
+
+bVals <- bVals[,samps]
+mirna_counts <- mirna_counts[,samps]
+all(colnames(bVals)==colnames(mirna_counts))
+
+dem <- read.table("/data/TCGA-PRAD/methylation_res/dmp_filt.txt", header=T, sep="\t")
+keep <- rownames(dem)
+bVals <- bVals[keep,]
+dim(bVals)
+dim(mirna_counts)
+```
+
+# correlation stats
+```{R}
+tab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
+pvaltab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
+
+# ~2 minutes run-time with present data set on a 2016 laptop
+# expect warnings for exact p-values and ties
+for (i in 1:nrow(bVals)){
+  for (j in 1:nrow(mirna_counts)) {
+    testres = cor.test(bVals[i, ], mirna_counts[j, ], method="spearman")
+    tab[i,j] = testres$estimate
+    pvaltab[i,j] = testres$p.value
+  }
+}
+
+rownames(tab) = rownames(bVals)
+colnames(tab) = rownames(mirna_counts)
+rownames(pvaltab) = rownames(bVals)
+colnames(pvaltab) = rownames(mirna_counts)
+```

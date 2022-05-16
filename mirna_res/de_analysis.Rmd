@@ -146,3 +146,75 @@ de_genes <- merge(de_genes, info, by = "ensembl_gene_id")
 de_genes <- de_genes[,c(7,3,5,6,8:12)]
 write.table(de_genes, "/data/TCGA-PRAD/mrna_res/de_genes.txt", row.names = F, sep="\t", quote=F)
 ```
+
+# Methylaion Filtering, DE
+
+```{R}
+load("/data/TCGA-PRAD/methylation_meta/methyl.RData")
+
+methyl_meta <- methyl_meta[!(methyl_meta$Sample_ID == "TCGA-V1-A9O5-06A"),]
+
+keep <- !(sampleNames(mSetSq) == "TCGA-V1-A9O5-06A")
+mSetSq <- mSetSq[,keep]
+mSetSq
+
+mSetSq <- dropLociWithSnps(mSetSq)
+mSetSq
+
+reactive_probes <- read.csv("/data/TCGA-PRAD/methylation_meta/cross_reactive_probes.csv", sep=",", header=T)
+keep <- !(featureNames(mSetSq) %in% reactive_probes$TargetID)
+mSetSq <- mSetSq[keep,] 
+mSetSq
+```
+
+```{r}
+rm(reactive_probes, keep)
+mVals <- getM(mSetSq)
+
+bVals <- getBeta(mSetSq)
+
+mSetSeq_flt <- mSetSq
+rm(mSetSeq)
+
+save.image("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
+```
+
+```{R}
+methyl_meta$Sample_Type <- ifelse(methyl_meta$Sample_Type == "Primary Tumor", "Tumor", methyl_meta$Sample_Type)
+methyl_meta$Sample_Type <- ifelse(methyl_meta$Sample_Type == "Solid Tissue Normal", "Normal", methyl_meta$Sample_Type)
+
+# this is the factor of interest
+SampleType <- factor(methyl_meta$Sample_Type)
+
+# use the above to create a design matrix
+design <- model.matrix(~0+Sample_Type, data=methyl_meta)
+colnames(design) <- c("Normal", "Tumor")
+ 
+# fit the linear model 
+fit <- limma::lmFit(mVals, design)
+# create a contrast matrix for specific comparisons
+contMatrix <- limma::makeContrasts(Tumor_vs_Normal = Tumor-Normal, levels=design)
+
+fit2 <- limma::contrasts.fit(fit, contMatrix)
+fit2 <- limma::eBayes(fit2)
+summary(limma::decideTests(fit2))
+```
+
+```{R}
+ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+
+ann450kSub <- ann450k[match(rownames(mVals),ann450k$Name),
+                      c(1:4,12:19,24:ncol(ann450k))]
+DMPs <- topTable(fit2, num=Inf, coef=1, genelist=ann450kSub)
+
+# sanity check for limma design below (tumor is up )
+
+par(mfrow=c(2,2))
+sapply(rownames(DMPs)[1:4], function(cpg){
+  plotCpg(bVals, cpg=cpg, pheno=methyl_meta$Sample_Type, ylab = "Beta values")
+})
+
+# quote = T important to mark empty cells properly for readign back to R
+write.table(DMPs, "/data/TCGA-PRAD/methylation_res/DMPs.txt", sep="\t", row.names = T, quote=T)
+```
+
