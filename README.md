@@ -92,6 +92,12 @@ Pearsons R2 correlation was computed between Principal Components 1:10 of varian
 <summary>mRNA EDA</summary>
 <br>
 
+Pearsons R2 correlation was computed between Principal Components 1:10 of variance stabilized mRNA expression data. The covariate 'ajcc tumor stage' was correlated with PC3, however as PC3 only accounts for 5.36% variation in the dataset, this covariate was excluded from the analysis.
+
+![Alt text](mrna_meta/PCA_corr.png?raw=true "R2 correlation PC:Metadata")
+
+![Alt text](mrna_meta/PCA_biplot.png?raw=true "PCA mRNA biplot")
+
 </details>
 
 <details open>
@@ -105,11 +111,13 @@ Pearsons R2 correlation was computed between Principal Components 1:10 of varian
 <summary> Differential Expression Analysis</summary>
 <br>
 
+DEA scripts are available in (`2.DEA.Rmd`](scripts/DEA.Rmd))
+
 <details open>
 <summary>DE miRNA</summary>
 <br>
 
-Differential expression analsis was conducted using `DESeq2` contrasting `Tumor` vs `Normal` samples in the TCGA-PRAD cohort. Robust results were generated using the `IHW` filter function for multiple correction testing, followed by `apeglm` shrinkage correction to penalize differentially expressed miRNAs with high variance. 
+Differential expression analsis was conducted using `DESeq2` contrasting `Tumor` vs `Normal` samples in the TCGA-PRAD cohort. Robust results were generated using the `IHW` filter function for multiple correction testing, followed by `apeglm` shrinkage correction to penalize differentially expressed miRNAs with high variance.
 
 miRNAs passing strict filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) were selected for downstream analysis (`upregulated: 121, downregulated: 135`).
 
@@ -119,6 +127,12 @@ Results were annotated using `biomaRt_v2.52.0` ([`mirna_res/de_mirs.txt`](mirna_
 <details open>
 <summary>DE mRNA</summary>
 <br>
+
+Differential expression analsis was conducted using `DESeq2` contrasting `Tumor` vs `Normal` samples in the TCGA-PRAD cohort. Robust results were generated using the `IHW` filter function for multiple correction testing, followed by `apeglm` shrinkage correction to penalize differentially expressed miRNAs with high variance.
+
+mRNAs passing strict filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) were selected for downstream analysis (`upregulated: 3201, downregulated: 3274`).
+
+Results were annotated using `biomaRt_v2.52.0` ([`mrna_res/de_genes.txt`](mrna_res/de_genes.txt))
 
 </details>
 
