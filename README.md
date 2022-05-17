@@ -154,9 +154,9 @@ Results were annotated using `biomaRt_v2.52.0` ([`mrna_res/de_genes.txt`](mrna_r
 <summary>DE Methylation</summary>
 <br>
 
-Diffferential expression analysis of CpG probes was conducted using `Limma`. As per the recommendations of [S. Lin et al](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587), M values were used for DE analysis instead of Beta values due to their homoscedastic properties, meeting the assumptions of canonical linear models/ANOVA tests. 
+Diffferential expression analysis of CpG probes was conducted using `Limma`. As per the recommendations of [S. Lin et al](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587), M values were used for DE analysis instead of Beta values due to their homoscedastic properties, meeting the assumptions of canonical linear models/ANOVA tests.
 
-Prior to filtering, there were 121062 up regulated probes and 169255 down regulated probes ([`methylation_res/DMPs.txt`](methylation_res/DMPs.txt)). Subsequent to filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) there were 60785 up regulated probes and 46911 down regulated probes retained for downstream analysis ([`methylation_res/dmp_filt.txt`](methylation_res/dmp_filt.txt)).
+Prior to filtering, there were 121062 up regulated probes and 169255 down regulated probes ([`methylation_res/DMPs.txt.gz`](methylation_res/DMPs.txt)). Subsequent to filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) there were 60785 up regulated probes and 46911 down regulated probes retained for downstream analysis ([`methylation_res/dmp_filt.txt.gz`](methylation_res/dmp_filt.txt)).
 
 </details>
 </details>
