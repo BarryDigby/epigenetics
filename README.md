@@ -49,7 +49,7 @@ Briefly, sample detection p-values were assessed as per recommended in the `minf
 
 > The method used by minfi to calculate detection p-values compares the total signal $(M+U)$ for each probe to the background signal level, which is estimated from the negative control probes. Very small p-values are indicative of a reliable signal whilst large p-values, for example >0.01, generally indicate a poor quality signal.
 
-[!Alt text](methylation_meta/pval_det.png?raw=true)
+![Alt text](methylation_meta/pval_det.png?raw=true)
 
 3 samples have p-values higher than 0.01 and are discarded from downstream analysis. 
 
