@@ -8,3 +8,4 @@ methylation_meta/mSetSq_filt.RData
 methylation_meta/methyl.RData
 methylation_res/*.txt
 *RData
+mirna_meta/hsa.tsv

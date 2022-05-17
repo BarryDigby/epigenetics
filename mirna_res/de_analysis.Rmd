@@ -28,7 +28,9 @@ get_downregulated <- function(df){
 
 ```
 
-# stage data and perform EDA.
+#######################################
+# 1. miRNA
+#######################################
 
 Drop the metastatic sample here
 ```{R}
@@ -41,7 +43,7 @@ mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Primary Tumor", "Tum
 ```
 
 
-```{R}
+```{R, message=F}
 library(DESeq2)
 library(IHW)
 library(apeglm)
@@ -94,13 +96,16 @@ down <- get_downregulated(res_df)
 de_mirs <- rbind(up,down)
 ```
 
-# heatmap
+# heatmap looks bad.
 
 ```{R, fig.height = 5}
-mat <- mirna_vst[rownames(de_mirs),]
-#mat <- t(mat)
-#mat <- scale(mat, center=T, scale = T)
-#mat <- t(mat)
+mat <- as.data.frame(mirna_vst[rownames(de_mirs),])
+mat$var <- apply(mat,1,var)
+mat <- mat[order(mat$var, decreasing = T),]
+mat <- as.matrix(mat[1:5,1:550])
+mat <- t(mat)
+mat <- scale(mat, center=T, scale = T)
+mat <- t(mat)
 
 annotation_col <- data.frame(Sample_Type = factor(mirna_meta$Sample.Type))
 rownames(annotation_col) = colnames(mat)
@@ -111,11 +116,11 @@ ann_col <- list(Sample_Type = colors)
 #png("/data/TCGA-PRAD/mirna_meta/de_heat.png", width=500, height = 800, units="mm", res = 500)
 pheatmap::pheatmap(mat, main = "Differentially Expressed miRNAs TCGA-PRAD",
          #col = hcl.colors(50, "Spectral",rev=T),
+         cluster_cols = TRUE,
          show_rownames=TRUE, show_colnames = FALSE,
          annotation_col = annotation_col,
          annotation_colors = ann_col)
 #dev.off()
-
 ```
 
 # Annotate with genomic locations for Circos etc.
@@ -147,6 +152,10 @@ de_mirs <- de_mirs[,c(1,3,5:11)]
 write.table(de_mirs, "/data/TCGA-PRAD/mirna_res/de_mirs.txt", row.names = F, sep="\t", quote=F)
 ```
 
+#######################################
+# 2. mRNA
+#######################################
+
 ```{R}
 load("/data/TCGA-PRAD/mrna_meta/mrna.RData")
 
@@ -161,7 +170,39 @@ dds <- DESeqDataSetFromMatrix(mrna_counts, mrna_meta, design = ~ Sample.Type)
 dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
 dds <- DESeq(dds)
 resultsNames(dds)
+```
 
+# EDA
+
+```{R}
+mrna_vst <- varianceStabilizingTransformation(dds, blind=F)
+mrna_vst <- assay(mrna_vst)
+PCA <- PCAtools::pca(mrna_vst, metadata = mrna_meta, removeVar = 0.1)
+
+png("/data/TCGA-PRAD/mrna_meta/PCA_corr.png", width = 960, height = 480, units = "px")
+PCAtools::eigencorplot(PCA, components = PCAtools::getComponents(PCA, 1:10),
+    metavars = c('age_at_index','race','Sample.Type','ajcc_pathologic_t'),
+    col = c('white', 'cornsilk1', 'gold', 'forestgreen', 'darkgreen'),
+    cexCorval = 1.2, fontCorval = 2, posLab = 'all', rotLabX = 45,
+    scale = TRUE,
+    main = bquote(PC ~ Pearson ~ r^2 ~ clinical ~ correlates),
+    plotRsquared = TRUE,
+    corFUN = 'pearson',
+    corUSE = 'pairwise.complete.obs',
+    corMultipleTestCorrection = 'BH',
+    signifSymbols = c('****', '***', '**', '*', ''),
+    signifCutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1))
+dev.off()
+
+png("/data/TCGA-PRAD/mrna_meta/PCA_biplot.png", width = 960, height = 600, units="px")
+PCAtools::biplot(PCA, x="PC1", y="PC3", colby = "Sample.Type", colkey = c(Normal = "forestgreen", Tumor = "blue"),
+                 drawConnectors = FALSE, ellipse = T, ellipseFill = T, ellipseAlpha = 0.25, lab = NULL,
+                 title = "TCGA-PRAD variance stabilized mRNA PCA Plot", gridlines.major = T, gridlines.minor = T,
+                 legendPosition = "right")
+dev.off()
+```
+
+```{R}
 res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
 lfc_res <- lfcShrink(dds=dds, res=res, coef=2, type="apeglm")
 res_df <- as.data.frame(lfc_res)
@@ -205,42 +246,29 @@ de_genes <- de_genes[,c(7,3,5,6,8:12)]
 write.table(de_genes, "/data/TCGA-PRAD/mrna_res/de_genes.txt", row.names = F, sep="\t", quote=F)
 ```
 
-# Methylaion Filtering, DE
+# Methylaion DE
 
 ```{R}
-load("/data/TCGA-PRAD/methylation_meta/methyl.RData")
-
-methyl_meta <- methyl_meta[!(methyl_meta$Sample_ID == "TCGA-V1-A9O5-06A"),]
-
-keep <- !(sampleNames(mSetSq) == "TCGA-V1-A9O5-06A")
-mSetSq <- mSetSq[,keep]
-mSetSq
-
-mSetSq <- dropLociWithSnps(mSetSq)
-mSetSq
-
-reactive_probes <- read.csv("/data/TCGA-PRAD/methylation_meta/cross_reactive_probes.csv", sep=",", header=T)
-keep <- !(featureNames(mSetSq) %in% reactive_probes$TargetID)
-mSetSq <- mSetSq[keep,] 
-mSetSq
-```
-
-```{r}
-rm(reactive_probes, keep)
-mVals <- getM(mSetSq)
-
-bVals <- getBeta(mSetSq)
-
-mSetSeq_flt <- mSetSq
-rm(mSetSeq)
-
-save.image("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
-```
-
-```{R}
+load("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
 methyl_meta$Sample_Type <- ifelse(methyl_meta$Sample_Type == "Primary Tumor", "Tumor", methyl_meta$Sample_Type)
-methyl_meta$Sample_Type <- ifelse(methyl_meta$Sample_Type == "Solid Tissue Normal", "Normal", methyl_meta$Sample_Type)
+# bizarre introduction of 3's here instead of methyl_meta$Sample_Type
+methyl_meta$Sample_Type <- ifelse(methyl_meta$Sample_Type == "3", "Normal", methyl_meta$Sample_Type)
+```
 
+
+# EDA
+```{R}
+pal <- RColorBrewer::brewer.pal(2, "Dark2")
+png("/data/TCGA-PRAD/methylation_meta/PCA_biplot.png")
+limma::plotMDS(mVals, top=10000, gene.selection="common", pch = 16,
+        col=pal[factor(methyl_meta$Sample_Type)])
+legend("bottomright", legend=levels(factor(methyl_meta$Sample_Type)), text.col=pal,
+       bg="white", cex=0.7)
+dev.off()
+```
+
+# LIMMA
+```{R}
 # this is the factor of interest
 SampleType <- factor(methyl_meta$Sample_Type)
 
@@ -263,16 +291,24 @@ ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 ann450kSub <- ann450k[match(rownames(mVals),ann450k$Name),
                       c(1:4,12:19,24:ncol(ann450k))]
-DMPs <- topTable(fit2, num=Inf, coef=1, genelist=ann450kSub)
+DMPs <- limma::topTable(fit2, num=Inf, coef=1, genelist=ann450kSub)
 
 # sanity check for limma design below (tumor is up )
 
 par(mfrow=c(2,2))
 sapply(rownames(DMPs)[1:4], function(cpg){
-  plotCpg(bVals, cpg=cpg, pheno=methyl_meta$Sample_Type, ylab = "Beta values")
+  plotCpg(mVals, cpg=cpg, pheno=methyl_meta$Sample_Type, ylab = "M values")
 })
 
 # quote = T important to mark empty cells properly for readign back to R
 write.table(DMPs, "/data/TCGA-PRAD/methylation_res/DMPs.txt", sep="\t", row.names = T, quote=T)
+
+## apply filtering
+DMP_filt <- subset(DMPs, DMPs$adj.P.Val < 0.05)
+up <- subset(DMP_filt, DMP_filt$logFC > 0.5)
+down <- subset(DMP_filt, DMP_filt$logFC < -0.5)
+DMP_filt <- rbind(up,down)
+
+write.table(DMP_filt, "/data/TCGA-PRAD/methylation_res/dmp_filt.txt", sep="\t", row.names = T, quote=T)
 ```
 

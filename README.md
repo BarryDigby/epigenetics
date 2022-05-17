@@ -160,3 +160,33 @@ Prior to filtering, there were 121062 up regulated probes and 169255 down regula
 
 </details>
 </details>
+
+<details open>
+<summary>miRNA Promoter Regions</summary>
+<br>
+
+miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site.
+
+Prior to overlapping miRNA promoter regions using bedtools, the order of negative strand miRNAs was corrected:
+
+```console
+head mirna_TSS.bed 
+chromosome	upstream	downstream	mirbase_id	strand
+20	62552306	62554377	hsa-mir-1-1	+
+18	21831088	21829003	hsa-mir-1-2	-
+11	122154308	122152228	hsa-mir-100	-
+```
+
+```bash
+awk '{OFS="\t"; if ($5=="+") {print} else {print $1,$3,$2,$4,$5,$6}}' mirna_TSS.bed | sed 's/[[:space:]]*$//' > mirs.bed
+```
+
+```console
+head mirs.bed
+chromosome	downstream	upstream	mirbase_id	strand
+20	62552306	62554377	hsa-mir-1-1	+
+18	21829003	21831088	hsa-mir-1-2	-
+11	122152228	122154308	hsa-mir-100	-
+```
+
+</details>
