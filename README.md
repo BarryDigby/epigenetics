@@ -45,7 +45,17 @@ A brief description of the generation of raw methylation data is given below:
 
 The two Masked Methylation Array IDAT files were used in the analysis and processed using the `minfi` package in `R` (`scripts/1.format_assays.Rmd`: # 3. Methylation staging)
 
-The `Metastatic` sample was removed, resulting in 50 `Normal` samples and 502 `Tumor` samples.
+Briefly, sample detection p-values were assessed as per recommended in the `minfi` tutorial:
+
+> The method used by minfi to calculate detection p-values compares the total signal $(M+U)$ for each probe to the background signal level, which is estimated from the negative control probes. Very small p-values are indicative of a reliable signal whilst large p-values, for example >0.01, generally indicate a poor quality signal.
+
+[!Alt text](methylation_meta/pval_det.png)
+
+3 samples have p-values higher than 0.01 and are discarded from downstream analysis. 
+
+As with the miRNA and mRNA assays, the `Metastatic` sample was removed, resulting in 50 `Normal` samples and 499 `Tumor` samples.
+
+Quantile processing, removal of probes overlapping SNPs and [cross-reactive probes](methylation_meta/cross_reactive_probes.csv) was performed as per the minfi documentation.
 
 ***
 </details>
