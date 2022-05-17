@@ -55,9 +55,31 @@ resultsNames(dds)
 # EDA
 
 ```{R}
-mirna_vst <- vst(dds, blind=F)
-PCA <- PCAtools::pca(mirna_vst, metadata = meta, remove)
+mirna_vst <- varianceStabilizingTransformation(dds, blind=F)
+mirna_vst <- assay(mirna_vst)
+PCA <- PCAtools::pca(mirna_vst, metadata = mirna_meta, removeVar = 0.1)
 
+png("/data/TCGA-PRAD/mirna_meta/PCA_corr.png", width = 960, height = 480, units = "px")
+PCAtools::eigencorplot(PCA, components = PCAtools::getComponents(PCA, 1:10),
+    metavars = c('age_at_index','race','Sample.Type','ajcc_pathologic_t'),
+    col = c('white', 'cornsilk1', 'gold', 'forestgreen', 'darkgreen'),
+    cexCorval = 1.2, fontCorval = 2, posLab = 'all', rotLabX = 45,
+    scale = TRUE,
+    main = bquote(PC ~ Pearson ~ r^2 ~ clinical ~ correlates),
+    plotRsquared = TRUE,
+    corFUN = 'pearson',
+    corUSE = 'pairwise.complete.obs',
+    corMultipleTestCorrection = 'BH',
+    signifSymbols = c('****', '***', '**', '*', ''),
+    signifCutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1))
+dev.off()
+
+png("/data/TCGA-PRAD/mirna_meta/PCA_biplot.png", width = 960, height = 600, units="px")
+PCAtools::biplot(PCA, x="PC1", y="PC2", colby = "Sample.Type", colkey = c(Normal = "forestgreen", Tumor = "blue"),
+                 drawConnectors = FALSE, ellipse = T, ellipseFill = T, ellipseAlpha = 0.25, lab = NULL,
+                 title = "TCGA-PRAD variance stabilized miRNA PCA Plot", gridlines.major = T, gridlines.minor = T,
+                 legendPosition = "right")
+dev.off()
 ```
 
 # RESULTS
@@ -70,6 +92,30 @@ up <- get_upregulated(res_df)
 down <- get_downregulated(res_df)
 
 de_mirs <- rbind(up,down)
+```
+
+# heatmap
+
+```{R, fig.height = 5}
+mat <- mirna_vst[rownames(de_mirs),]
+#mat <- t(mat)
+#mat <- scale(mat, center=T, scale = T)
+#mat <- t(mat)
+
+annotation_col <- data.frame(Sample_Type = factor(mirna_meta$Sample.Type))
+rownames(annotation_col) = colnames(mat)
+colors <- c("forestgreen", "blue")
+names(colors) <- c("Normal", "Tumor")
+ann_col <- list(Sample_Type = colors)
+
+#png("/data/TCGA-PRAD/mirna_meta/de_heat.png", width=500, height = 800, units="mm", res = 500)
+pheatmap::pheatmap(mat, main = "Differentially Expressed miRNAs TCGA-PRAD",
+         #col = hcl.colors(50, "Spectral",rev=T),
+         show_rownames=TRUE, show_colnames = FALSE,
+         annotation_col = annotation_col,
+         annotation_colors = ann_col)
+#dev.off()
+
 ```
 
 # Annotate with genomic locations for Circos etc.

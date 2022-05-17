@@ -113,6 +113,7 @@ Differential expression analsis was conducted using `DESeq2` contrasting `Tumor`
 
 miRNAs passing strict filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) were selected for downstream analysis (`upregulated: 121, downregulated: 135`).
 
+Results were annotated using `biomaRt_v2.52.0` ([`mirna_res/de_mirs.txt`](mirna_res/de_mirs.txt))
 </details>
 
 <details open>
