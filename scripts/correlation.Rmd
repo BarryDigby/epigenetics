@@ -153,7 +153,7 @@ sig.tab <- subset(sig.tab, sig.tab$key %in% map$key)
 ```
 
 ```{R}
-d = reshape2::dcast(sig.tab, CpG ~ miRNA, value.var = "Spearman_cor")
+#d = reshape2::dcast(sig.tab, CpG ~ miRNA, value.var = "Spearman_cor")
 # not sure that does what its supposed to.
 
 tab <- subset(tab, colnames(tab) %in% sig.tab$miRNA)
@@ -165,8 +165,8 @@ keep <- !duplicated(rownames(tab))
 tab <- tab[keep,]
 
 # convert to a -1/0/1 matrix
-tab[tab>0] =  1
-tab[tab<0] = -1
+#tab[tab>0] =  1
+#tab[tab<0] = -1
 #tab[is.na(tab)] = 0
 ```
 
@@ -183,12 +183,14 @@ mycolors = colorRampPalette(c("dodgerblue3","white", "firebrick1"))(n=299)
 #keep <- !duplicated(rownames(tab))
 #tab <- tab[keep,]
 
-## add annotations you idiot 
+
+
+## add annotations you idiot - these are incorrectly aligned. The de mirs are not correctly annotated.
+# annot_col seems to be slapped on to miRs without any preservation
 col_anno <- subset(de_mirs, de_mirs$mirbase_id %in% colnames(tab))
 col_anno$direction <- ifelse(col_anno$log2FoldChange > 0, "Up", "Down")
 col_anno <- col_anno[!duplicated(col_anno$mirbase_id),]
-annot_col <- data.frame(Direction = factor(col_anno$direction))
-rownames(annot_col) <- colnames(tab)
+annot_col <- data.frame(row.names = col_anno$mirbase_id, Direction = factor(col_anno$direction))
 
 cols <- c("red", "blue")
 names(cols) <- c("Up", "Down")
@@ -197,18 +199,18 @@ annot_colors <- list(Direction = cols)
 
 row_anno <- subset(dem, dem$Name %in% rownames(tab))
 row_anno$direction <- ifelse(row_anno$logFC > 0, "Up", "Down")
-annot_row <- data.frame(Direction = factor(row_anno$direction))
-rownames(annot_row) <- rownames(tab)
+annot_row <- data.frame(row.names = row_anno$Name, Direction = factor(row_anno$direction))
+
 
 # Correlation distance and average linkage
 pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
          clustering_distance_cols = "correlation",
          clustering_method = "average",
-         cutree_rows=2, cutree_cols=2, # decide number of clusters
+         cutree_rows=2, cutree_cols=3, # decide number of clusters
          annotation_colors = annot_colors,
          annotation_row = annot_row,
          annotation_col = annot_col,
-         col = hcl.colors(100, "Blues",rev=F),
+         col = hcl.colors(100, "Purple-Green",rev=F),
          show_rownames=TRUE,
          show_colnames=TRUE)
 
