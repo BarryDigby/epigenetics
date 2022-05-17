@@ -160,9 +160,36 @@ sampleNames(rgSet) <- samplesheet$Sample_ID
 table(sampleNames(rgSet) == samplesheet$Sample_ID)
 ```
 
+# filter by p-value detection vals
+```{R}
+detP <- detectionP(rgSet)
+```
+
+```{R}
+pal <- RColorBrewer::brewer.pal(8, "Dark2")
+png("/data/TCGA-PRAD/methylation_meta/pval_det.png")
+barplot(colMeans(detP), col=pal[factor(samplesheet$Sample_Type)], las = 2, cex.names = 0.4, main = "Mean detection p-values")
+abline(h=0.01,col="red")
+dev.off()
+```
+
+```{R}
+keep <- colMeans(detP) < 0.01
+rgSet <- rgSet[,keep]
+
+# update annotations
+samplesheet <- samplesheet[match(sampleNames(rgSet), samplesheet$Sample_ID),]
+
+#now rename columns 
+sampleNames(rgSet) <- samplesheet$Sample_ID
+table(sampleNames(rgSet) == samplesheet$Sample_ID)
+```
+
 # normalise, format metadata and save to file
 ```{R}
-#mSetSq <- preprocessQuantile(rgSet)
+mSetSq <- preprocessQuantile(rgSet)
+rm(rgSet)
+save.image("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
 # check colname preservation
 #rm(rgSet)
 load("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
@@ -210,7 +237,7 @@ mVals <- getM(mSetSq)
 bVals <- getBeta(mSetSq)
 
 mSetSeq_flt <- mSetSq
-rm(mSetSeq)
+rm(mSetSq)
 
 save.image("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
 ```

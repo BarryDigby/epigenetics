@@ -83,7 +83,7 @@ Upon removal of the `Metastatic` sample, the number of samples was 50 `Normals` 
 </details>
 
 <details>
-<summary> Exploratory Data analysis</summary>
+<summary> Exploratory Data Analysis</summary>
 <br>
 
 <details open>
@@ -113,6 +113,10 @@ Pearsons R2 correlation was computed between Principal Components 1:10 of varian
 <details open>
 <summary>DNA methylation EDA</summary>
 <br>
+
+MDS plot displaying the top 10,000 CpG sites in the TCGA-PRAD cohort given below.
+
+![Alt text](methylation_meta/PCA_biplot.png?raw=true "MDS methyation biplot")
 
 </details>
 </details>
@@ -149,6 +153,10 @@ Results were annotated using `biomaRt_v2.52.0` ([`mrna_res/de_genes.txt`](mrna_r
 <details open>
 <summary>DE Methylation</summary>
 <br>
+
+Diffferential expression analysis of CpG probes was conducted using `Limma`. As per the recommendations of [S. Lin et al](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587), M values were used for DE analysis instead of Beta values due to their homoscedastic properties, meeting the assumptions of canonical linear models/ANOVA tests. 
+
+Prior to filtering, there were 121062 up regulated probes and 169255 down regulated probes. Subsequent to filtering (`Log2FoldChange > 0.5 || < -0.5 && adjusted p-value < 0.05`) there were 60785 up regulated probes and 46911 down regulated probes retained for downstream analysis.
 
 </details>
 </details>
