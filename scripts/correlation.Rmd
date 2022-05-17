@@ -20,20 +20,20 @@ mirna_counts <- scale(mirna_counts, center = F)
 ```
 
 
-```{R}
+```{R, message=F}
 load("/data/TCGA-PRAD/methylation_meta/mSetSq_filt.RData")
-rm(mVals, mSetSeq_flt)
+rm(bVals, mSetSeq_flt)
 
-samps <- intersect(colnames(mirna_counts), colnames(bVals))
+samps <- intersect(colnames(mirna_counts), colnames(mVals))
 
-bVals <- bVals[,samps]
+mVals <- mVals[,samps]
 mirna_counts <- mirna_counts[,samps]
-all(colnames(bVals)==colnames(mirna_counts))
+all(colnames(mVals)==colnames(mirna_counts))
 
 dem <- read.table("/data/TCGA-PRAD/methylation_res/dmp_filt.txt", header=T, sep="\t")
 keep <- rownames(dem)
-bVals <- bVals[keep,]
-dim(bVals)
+mVals <- mVals[keep,]
+dim(mVals)
 dim(mirna_counts)
 ```
 
@@ -45,28 +45,28 @@ probes <- olap$V4
 mirs <- olap$V9
 
 mirna_counts <- mirna_counts[mirs,]
-bVals <- bVals[probes,]
+mVals <- mVals[probes,]
 ```
 
 
 # correlation stats
 ```{R, message=F, warning=F}
-tab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
-pvaltab = matrix(data=NA, nrow=nrow(bVals), ncol = nrow(mirna_counts))
+tab = matrix(data=NA, nrow=nrow(mVals), ncol = nrow(mirna_counts))
+pvaltab = matrix(data=NA, nrow=nrow(mVals), ncol = nrow(mirna_counts))
 
 # ~2 minutes run-time with present data set on a 2016 laptop
 # expect warnings for exact p-values and ties
-for (i in 1:nrow(bVals)){
+for (i in 1:nrow(mVals)){
   for (j in 1:nrow(mirna_counts)) {
-    testres = cor.test(bVals[i, ], mirna_counts[j, ], method="spearman")
+    testres = cor.test(mVals[i, ], mirna_counts[j, ], method="spearman")
     tab[i,j] = testres$estimate
     pvaltab[i,j] = testres$p.value
   }
 }
 
-rownames(tab) = rownames(bVals)
+rownames(tab) = rownames(mVals)
 colnames(tab) = rownames(mirna_counts)
-rownames(pvaltab) = rownames(bVals)
+rownames(pvaltab) = rownames(mVals)
 colnames(pvaltab) = rownames(mirna_counts)
 ```
 
@@ -154,13 +154,20 @@ sig.tab <- subset(sig.tab, sig.tab$key %in% map$key)
 
 ```{R}
 d = reshape2::dcast(sig.tab, CpG ~ miRNA, value.var = "Spearman_cor")
-m = as.matrix(d[,-1])
-rownames(m) = d[,1]
+# not sure that does what its supposed to.
+
+tab <- subset(tab, colnames(tab) %in% sig.tab$miRNA)
+tab <- subset(tab, rownames(tab) %in% sig.tab$CpG)
+
+keep <- !duplicated(colnames(tab))
+tab <- tab[,keep]
+keep <- !duplicated(rownames(tab))
+tab <- tab[keep,]
 
 # convert to a -1/0/1 matrix
-m[m>0] =  1
-m[m<0] = -1
-m[is.na(m)] = 0
+tab[tab>0] =  1
+tab[tab<0] = -1
+#tab[is.na(tab)] = 0
 ```
 
 
@@ -168,16 +175,42 @@ m[is.na(m)] = 0
 ## Clustering with pheatmap
 ###############################################################################
 
-```{R, fig.height=5, fig.width=4}
+```{R, fig.height=8, fig.width=6}
 mycolors = colorRampPalette(c("dodgerblue3","white", "firebrick1"))(n=299)
+
+#keep <- !duplicated(colnames(tab))
+#tab <- tab[,keep]
+#keep <- !duplicated(rownames(tab))
+#tab <- tab[keep,]
+
+## add annotations you idiot 
+col_anno <- subset(de_mirs, de_mirs$mirbase_id %in% colnames(tab))
+col_anno$direction <- ifelse(col_anno$log2FoldChange > 0, "Up", "Down")
+col_anno <- col_anno[!duplicated(col_anno$mirbase_id),]
+annot_col <- data.frame(Direction = factor(col_anno$direction))
+rownames(annot_col) <- colnames(tab)
+
+cols <- c("red", "blue")
+names(cols) <- c("Up", "Down")
+annot_colors <- list(Direction = cols)
+
+
+row_anno <- subset(dem, dem$Name %in% rownames(tab))
+row_anno$direction <- ifelse(row_anno$logFC > 0, "Up", "Down")
+annot_row <- data.frame(Direction = factor(row_anno$direction))
+rownames(annot_row) <- rownames(tab)
 
 # Correlation distance and average linkage
 pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
          clustering_distance_cols = "correlation",
          clustering_method = "average",
-         cutree_rows=5, cutree_cols=5, # decide number of clusters
-         annotation_colors = annotations_colors,
-         col = hcl.colors(50, "Viridis",rev=T),
+         cutree_rows=2, cutree_cols=2, # decide number of clusters
+         annotation_colors = annot_colors,
+         annotation_row = annot_row,
+         annotation_col = annot_col,
+         col = hcl.colors(100, "Blues",rev=F),
          show_rownames=TRUE,
          show_colnames=TRUE)
+
+
 ```

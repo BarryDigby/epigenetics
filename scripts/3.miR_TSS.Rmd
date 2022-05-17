@@ -33,12 +33,12 @@ for(i in 1:nrow(mirs)){
     TSS = as.numeric(row$start_position)
     width = abs(row$start_position - row$end_position) + 1
     upstream = TSS - 2000
-    downstream = (TSS + width) + 1000
+    downstream = TSS + width
   }else{
     TSS = as.numeric(row$end_position)
     width = abs(row$start_position - row$end_position) + 1
     upstream = TSS + 2000
-    downstream = (TSS - width) - 1000
+    downstream = TSS - width
   }
   vec <- c(row$mirbase_id, row$strand, TSS, width, row$chromosome_name, upstream, downstream)
   collect[i,] <- vec
@@ -84,15 +84,6 @@ circos.genomicTrack(mirs,
 circos.clear()
 
 ```
-
-
-# mir mrna targets 
-
-```{R}
-targets <- read.csv("/data/TCGA-PRAD/mirna_res/mirnet_mir_gene.csv", header=T)
-
-key <- genes$hgnc_symbol
-
-targets <- subset(targets, targets$symbol %in% key)
+- subset(targets, targets$symbol %in% key)
 
 ```

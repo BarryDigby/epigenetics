@@ -162,10 +162,20 @@ Prior to filtering, there were 121062 up regulated probes and 169255 down regula
 </details>
 
 <details open>
-<summary>miRNA Promoter Regions</summary>
+<summary>mimQTL analysis</summary>
 <br>
 
-miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site.
+A two-fold approach was taken to analysing mimQTLs:
+
+<details open>
+<summary>Approach 1</summary>
+<br>
+
+> Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Subsequent correlation analysis reveals the direction of relationship, identifying methylated regions which have resulted in higher miRNA expression.
+
+###### Calculating Overlaps
+
+miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site ([`scripts/3.miR_TSS.Rmd`](scripts/3.miR_TSS.Rmd)).
 
 Prior to overlapping miRNA promoter regions using bedtools, the order of negative strand miRNAs was corrected:
 
@@ -188,5 +198,16 @@ chromosome	downstream	upstream	mirbase_id	strand
 18	21829003	21831088	hsa-mir-1-2	-
 11	122152228	122154308	hsa-mir-100	-
 ```
+
+Differentially expressed CpG sites were overlapped with differentially expressed miRNAs using bedtools:
+
+```bash
+bedtools intersect -a dmp_filt.bed -b mirs.bed -wa -wb > de-probes_olap_de-mirs.bed
+```
+
+***
+
+
+
 
 </details>
