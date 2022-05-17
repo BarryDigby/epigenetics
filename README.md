@@ -121,7 +121,7 @@ Pearsons R2 correlation was computed between Principal Components 1:10 of varian
 <summary> Differential Expression Analysis</summary>
 <br>
 
-DEA scripts are available in [`2.DEA.Rmd`](scripts/DEA.Rmd))
+DEA scripts are available in [`2.DEA.Rmd`](scripts/DEA.Rmd)
 
 <details open>
 <summary>DE miRNA</summary>
