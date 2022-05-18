@@ -223,6 +223,6 @@ Using the `cutree` function, the CpG & miRNA cluster were extracted from the hea
 
 Scatter plots of the mimQTLs are available under [`mimQTLs/scatter`](mimQTLs/scatter):
 
-![Alt text](mimQTLs/scatter/hsa-mir-1-1:cpg18856925.png?raw=true "mimQTL scatter plot")
+![Alt text](mimQTLs/scatter/hsa-mir-1-1:cg18856925.png?raw=true "mimQTL scatter plot")
 
 </details>
