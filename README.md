@@ -175,7 +175,7 @@ A two-fold approach was taken to analysing mimQTLs:
 
 ##### Calculating Overlaps
 
-miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site ([`scripts/3.miR_TSS.Rmd`](scripts/3.miR_TSS.Rmd)).
+miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site ([`scripts/3.miR_TSS.Rmd`](scripts/3.miR_TSS.Rmd)). **It is importsnt to note that the TSS marks the beginning of the precursor-miRNA transcript, not the final mature miRNA**.
 
 Prior to overlapping miRNA promoter regions with differentially expressed CpG sites using bedtools, the order of negative strand miRNAs was corrected:
 
