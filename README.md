@@ -171,13 +171,13 @@ A two-fold approach was taken to analysing mimQTLs:
 <summary>Approach 1</summary>
 <br>
 
-> Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Subsequent correlation analysis reveals the direction of relationship, identifying methylated regions which have resulted in higher miRNA expression.
+> Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Compute pearsons correlation coefficient at mimQTL sites, filter for statistically significant associations.
 
-###### Calculating Overlaps
+##### Calculating Overlaps
 
 miRNA promoter regions were calculated in accordance to common literature, spanning 2kb from the miRNA transcription start site ([`scripts/3.miR_TSS.Rmd`](scripts/3.miR_TSS.Rmd)).
 
-Prior to overlapping miRNA promoter regions using bedtools, the order of negative strand miRNAs was corrected:
+Prior to overlapping miRNA promoter regions with differentially expressed CpG sites using bedtools, the order of negative strand miRNAs was corrected:
 
 ```console
 head mirna_TSS.bed 
@@ -207,6 +207,15 @@ bedtools intersect -a dmp_filt.bed -b mirs.bed -wa -wb > de-probes_olap_de-mirs.
 
 ***
 
+##### Calculating Correlations
+
+Using the results of [`de-probes_olap_de-mirs.bed`](bedtools/de-probes_olap_de-mirs.bed) as the subset key for the original methylation M Values and normalized miRNA counts (variance stabilizing transformation (`DESeq2`) see below), the **spearman** correlation between differentially methylated probes and differentially expressed miRNAs was computed.
+
+###### VST normalization (miRNAs)
+
+> This function calculates a variance stabilizing transformation (VST) from the fitted dispersion-mean relation(s) and then transforms the count data (normalized by division by the size factors or normalization factors), **yielding a matrix of values which are now approximately homoskedastic (having constant variance along the range of mean values). The transformation also normalizes with respect to library size.** 
+
+![Alt text](mimQTL/spearman_heatmap.png?raw=true "Spearman correlation heatmap")
 
 
 
