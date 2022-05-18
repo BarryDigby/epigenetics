@@ -15,8 +15,15 @@ mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Solid Tissue Normal"
 mirna_meta$Sample.Type <- ifelse(mirna_meta$Sample.Type == "Primary Tumor", "Tumor", mirna_meta$Sample.Type)
 de_mirs <- read.table("/data/TCGA-PRAD/mirna_res/de_mirs.txt", header=T, sep="\t")
 
-mirna_counts <- mirna_counts[de_mirs$mirbase_id, ]
-mirna_counts <- scale(mirna_counts, center = F)
+# normalize using deseq2 - more robust than 'scale'
+dds <- DESeqDataSetFromMatrix(mirna_counts, mirna_meta, design = ~ Sample.Type)
+dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
+dds <- DESeq(dds)
+mirna_vst <- varianceStabilizingTransformation(counts(dds), blind = F)
+
+mirna_counts <- as.matrix(mirna_vst[de_mirs$mirbase_id, ])
+
+#mirna_counts <- scale(mirna_counts, center = T)
 ```
 
 
@@ -175,17 +182,10 @@ tab <- tab[keep,]
 ## Clustering with pheatmap
 ###############################################################################
 
-```{R, fig.height=8, fig.width=6}
-mycolors = colorRampPalette(c("dodgerblue3","white", "firebrick1"))(n=299)
+```{R, fig.height=5, fig.width=8}
 
-#keep <- !duplicated(colnames(tab))
-#tab <- tab[,keep]
-#keep <- !duplicated(rownames(tab))
-#tab <- tab[keep,]
-
-
-
-## add annotations you idiot - these are incorrectly aligned. The de mirs are not correctly annotated.
+## add annotations you idiot xxx
+#- these are incorrectly aligned. The de mirs are not correctly annotated.
 # annot_col seems to be slapped on to miRs without any preservation
 col_anno <- subset(de_mirs, de_mirs$mirbase_id %in% colnames(tab))
 col_anno$direction <- ifelse(col_anno$log2FoldChange > 0, "Up", "Down")
@@ -201,18 +201,68 @@ row_anno <- subset(dem, dem$Name %in% rownames(tab))
 row_anno$direction <- ifelse(row_anno$logFC > 0, "Up", "Down")
 annot_row <- data.frame(row.names = row_anno$Name, Direction = factor(row_anno$direction))
 
+mycolors = colorRampPalette(c("blue4","white", "red4"))(n=299)
 
 # Correlation distance and average linkage
+#png("/data/TCGA-PRAD/mimQTLs/spearman_heatmap.png", width = 8, height = 5, units="in", res = 300)
 pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
          clustering_distance_cols = "correlation",
          clustering_method = "average",
-         cutree_rows=2, cutree_cols=3, # decide number of clusters
+         cutree_rows=2, cutree_cols=2, # decide number of clusters
          annotation_colors = annot_colors,
          annotation_row = annot_row,
          annotation_col = annot_col,
          col = hcl.colors(100, "Purple-Green",rev=F),
          show_rownames=TRUE,
          show_colnames=TRUE)
+#dev.off()
+```
+
+## extract clusters
+
+```{R}
+out = pheatmap::pheatmap(tab,
+        clustering_distance_rows = "correlation",
+        clustering_distance_cols = "correlation",
+        clustering_method = "average")
+
+# CpGs in rows
+a = rownames(tab[out$tree_row[["order"]],])
+b = sort(cutree(out$tree_row, k=2))
+b = as.data.frame(t(data.frame(as.list(b))))
+b$direction <- ifelse(b$V1 == 1, "Up", "Down")
+b$CpG <- rownames(b)
+colnames(b)[1] <- "cluster"
+b <- b[,c(3,1,2)]
+write.table(b, "/data/TCGA-PRAD/mimQTLs/CpG_clusters.txt", sep = "\t", quote=F, row.names = F)
+
+# miRNAs in columns
+c = colnames(tab[,out$tree_col[["order"]]])
+d = sort(cutree(out$tree_col, k=2))
+d = as.data.frame(t(data.frame(as.list(d))))
+d$direction <- ifelse(d$V1 == 1, "Up", "Down")
+d$miRNA <- rownames(d)
+colnames(d)[1] <- "cluster"
+d <- d[,c(3,1,2)]
+d$miRNA <- gsub("\\.", "-", d$miRNA)
+write.table(d, "/data/TCGA-PRAD/mimQTLs/miRNA_clusters.txt", sep = "\t", row.names = F, quote=F)
+
+```
+
+# scat plot test
+```{R, fig.width=4, fig.height=3}
+library(ggpubr)
+library(scales)
+
+mir <- colnames(tab)[1]
+cpg <- rownames(tab)[1]
+
+df <- data.frame(miR = mirna_counts[mir,], CpG = mVals[cpg,])
+colnames(df) <- c(mir, cpg)
+
+ggscatter(df, x=mir, y=cpg, add = "reg.line", add.params = list(color="red", linetype="dashed"), cor.coef = T, cor.method = "spearman", size = 0.9, ggtheme = theme_minimal())
 
 
+
++ scale_x_continuous(trans = log10_trans(), labels = scientific) + scale_y_continuous(trans = log10_trans(), labels = scientific) + geom_abline(intercept = 0, pch = 12, linetype="dotted", cex = 0.5, color="gray10")
 ```

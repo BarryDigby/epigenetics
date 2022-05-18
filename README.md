@@ -217,6 +217,8 @@ Using the results of [`de-probes_olap_de-mirs.bed`](bedtools/de-probes_olap_de-m
 
 ![Alt text](mimQTLs/spearman_heatmap.png?raw=true "Spearman correlation heatmap")
 
+###### Cluster extraction
 
+Using the `cutree` function, the CpG & miRNA cluster were extracted from the heatmap and stored under [`mimQTLs/miRNA_clusters.txt`](mimQTLs/miRNA_clusters.txt) and [`mimQTLs/CpG_clusters.txt`](mimQTLs/CpG_clusters.txt), respectively.
 
 </details>
