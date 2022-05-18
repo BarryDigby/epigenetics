@@ -221,4 +221,8 @@ Using the results of [`de-probes_olap_de-mirs.bed`](bedtools/de-probes_olap_de-m
 
 Using the `cutree` function, the CpG & miRNA cluster were extracted from the heatmap and stored under [`mimQTLs/miRNA_clusters.txt`](mimQTLs/miRNA_clusters.txt) and [`mimQTLs/CpG_clusters.txt`](mimQTLs/CpG_clusters.txt), respectively.
 
+Scatter plots of the mimQTLs are available under [`mimQTLs/scatter`](mimQTLs/scatter):
+
+![Alt text](mimQTLs/scatter/hsa-mir-1-1:cpg18856925.png?raw=true "mimQTL scatter plot")
+
 </details>
