@@ -43,7 +43,7 @@ A brief description of the generation of raw methylation data is given below:
 
 `SeSAMe` offers correction to detection failures that occur in other DNA methylation array software commonly due to germline and somatic deletions by utilizing a novel way to calculate the significance of detected signals in methylation arrays. By correcting for these artifacts as well as other improvements to DNA methylation data processing, `SeSAMe` improves upon detection calling and quality control of processed DNA methylation data. `SeSAMe` output files include: two Masked Methylation Array IDAT files, one for each color channel, that contains channel data from a raw methylation array after masking potential genotyping information; and a subsequent Methylation Beta Value TXT file derived from the two Masked Methylation Array IDAT files, that displays the calculated methylation beta value for CpG sites.
 
-The two Masked Methylation Array IDAT files were used in the analysis and processed using the `minfi` package in `R` ([`scripts/1.format_assays.Rmd`](scripts/1.format_assays.Rmd): # 3. Methylation staging)
+Masked Methylation Array IDAT files were used in the analysis and processed using the `minfi` package in `R` ([`scripts/1.format_assays.Rmd`](scripts/1.format_assays.Rmd): # 3. Methylation staging).
 
 Briefly, sample detection p-values were assessed as per recommended in the `minfi` tutorial:
 
@@ -165,11 +165,6 @@ Prior to filtering, there were 121062 up regulated probes and 169255 down regula
 <summary>mimQTL analysis</summary>
 <br>
 
-A two-fold approach was taken to analysing mimQTLs:
-
-<details open>
-<summary>Approach 1</summary>
-<br>
 
 > Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Compute spearmans correlation coefficient at mimQTL sites, filter for statistically significant associations.
 

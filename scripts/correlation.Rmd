@@ -8,6 +8,7 @@ output: html_document
 # load raw, de mirna cpg and normalise mats.
 
 ```{R}
+library(DESeq2)
 load("/data/TCGA-PRAD/mirna_meta/mirna.RData")
 mirna_counts <- mirna_counts[ , -which(names(mirna_counts) %in% c("TCGA-V1-A9O5-06A"))]
 mirna_meta <- mirna_meta[!(mirna_meta$Sample.ID == "TCGA-V1-A9O5-06A"),]
@@ -208,7 +209,7 @@ mycolors = colorRampPalette(c("blue4","white", "red4"))(n=299)
 pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
          clustering_distance_cols = "correlation",
          clustering_method = "average",
-         cutree_rows=2, cutree_cols=2, # decide number of clusters
+         cutree_rows=2, cutree_cols=5, # decide number of clusters
          annotation_colors = annot_colors,
          annotation_row = annot_row,
          annotation_col = annot_col,
@@ -250,9 +251,31 @@ write.table(d, "/data/TCGA-PRAD/mimQTLs/miRNA_clusters.txt", sep = "\t", row.nam
 ```
 
 # scat plot test
+Need to be fussy here and plot only the miRNA and its corresponding overlapping miRNA?
+
 ```{R, fig.width=4, fig.height=3}
 library(ggpubr)
 library(scales)
+
+# subset sig.tab
+sig.tab2 <- sig.tab[!duplicated(sig.tab$miRNA),]
+
+for(key in 1:nrow(olap)){
+  
+  row <- olap[key,]
+  mir <- row$V9
+  cpg <- row$V4
+  fn <- paste(mir,cpg,sep=":")
+  
+  df <- data.frame(miR = mirna_counts[mir,], CpG = mVals[cpg,])
+  colnames(df) <- c(mir, cpg)
+  
+  p <- ggscatter(df, x=mir, y=cpg, add = "reg.line", add.params = list(color="blue",                      fill = "lightgrey", linetype="solid", size=0.4), cor.coef = T, conf.int=T,
+                cor.method = "spearman", size = 0.8, ggtheme = theme_bw())
+  png(paste0("/data/TCGA-PRAD/mimQTLs/scatter/", fn, ".png", sep=""), width=4, height=3, units="in", res= 300)
+  plot(p)
+  dev.off()
+}
 
 mir <- colnames(tab)[1]
 cpg <- rownames(tab)[1]
@@ -260,9 +283,17 @@ cpg <- rownames(tab)[1]
 df <- data.frame(miR = mirna_counts[mir,], CpG = mVals[cpg,])
 colnames(df) <- c(mir, cpg)
 
-ggscatter(df, x=mir, y=cpg, add = "reg.line", add.params = list(color="red", linetype="dashed"), cor.coef = T, cor.method = "spearman", size = 0.9, ggtheme = theme_minimal())
+ggscatter(df, x=mir, y=cpg, add = "reg.line", add.params = list(color="blue", fill = "lightgrey", linetype="solid", size=0.4), conf.int = T, cor.coef = T, cor.method = "spearman", size = 0.8)
 
 
 
 + scale_x_continuous(trans = log10_trans(), labels = scientific) + scale_y_continuous(trans = log10_trans(), labels = scientific) + geom_abline(intercept = 0, pch = 12, linetype="dotted", cex = 0.5, color="gray10")
+```
+
+
+# EnrichR
+
+```{R}
+library(Enr)
+
 ```

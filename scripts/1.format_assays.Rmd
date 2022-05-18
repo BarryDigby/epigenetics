@@ -183,6 +183,7 @@ samplesheet <- samplesheet[match(sampleNames(rgSet), samplesheet$Sample_ID),]
 #now rename columns 
 sampleNames(rgSet) <- samplesheet$Sample_ID
 table(sampleNames(rgSet) == samplesheet$Sample_ID)
+rm(detP)
 ```
 
 # normalise, format metadata and save to file
@@ -192,7 +193,7 @@ rm(rgSet)
 save.image("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
 # check colname preservation
 #rm(rgSet)
-load("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
+#load("/data/TCGA-PRAD/methylation_meta/mSetSq.RData")
 table(sampleNames(mSetSq) == samplesheet$Sample_ID)
 clinical <- read.table("/data/TCGA-PRAD/methylation_meta/trimmed_clinical.tsv", header=T, sep="\t")
 master <- merge(samplesheet, clinical, by.x = "Case_ID", by.y = "case_submitter_id")
@@ -207,7 +208,7 @@ rownames(methyl_meta) <- methyl_meta$Sample_ID
 methyl_meta <- methyl_meta[,c(1, 10,11,12,13,7,8)]
 rm(master, clinical, rgSet, samplesheet)
 # reproducibility note: objects may be out of order in this code block. 
-save.image(file = "/data/TCGA-PRAD/methylation_meta/methyl.RData")
+#save.image(file = "/data/TCGA-PRAD/methylation_meta/methyl.RData")
 ```
 
 # Methylation filtering
