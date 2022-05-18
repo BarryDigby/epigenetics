@@ -171,7 +171,7 @@ A two-fold approach was taken to analysing mimQTLs:
 <summary>Approach 1</summary>
 <br>
 
-> Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Compute pearsons correlation coefficient at mimQTL sites, filter for statistically significant associations.
+> Identify differentially expressed miRNAs in TCGA-PRAD and their overlapping differentially expressed CpG sites, yielding differentially methylated & differentially expressed (DMDE) mimQTLs. Compute spearmans correlation coefficient at mimQTL sites, filter for statistically significant associations.
 
 ##### Calculating Overlaps
 
