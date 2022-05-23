@@ -8,4 +8,15 @@ methylation_meta/mSetSq_filt.RData
 methylation_meta/methyl.RData
 methylation_res/*.txt
 *RData
-mirna_meta/hsa.tsv
+mirna_meta/hsa.tsv./methylation_res/DMPs.txt.gz
+methylation_res/DMPs.txt
+methylation_res/dmp_filt.txt
+mimQTLs/sig.tab.txt
+mimQTLs/pvaltab_all_des.txt
+mimQTLs/tab_all_des.txt
+mimQTLs/dmp_filt.txt
+methylation_meta/mSetSq_filt.RData
+methylation_meta/methyl.RData
+methylation_meta/rgSet.RData
+methylation_meta/mSetSq.RData
+mrna_meta/mrna.RData
