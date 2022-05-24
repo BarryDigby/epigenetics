@@ -12,7 +12,7 @@ library(biomaRt)
 
 get_upregulated <- function(df){
 
-	key <- intersect(rownames(df)[which(df$log2FoldChange>=0.5)], rownames(df)[which(df$padj<=0.05)])
+	key <- intersect(rownames(df)[which(df$log2FoldChange>=1)], rownames(df)[which(df$padj<=0.05)])
 
     results <- as.data.frame((df)[which(rownames(df) %in% key),])
 	return(results)
@@ -20,7 +20,7 @@ get_upregulated <- function(df){
 
 get_downregulated <- function(df){
 
-  	key <- intersect(rownames(df)[which(df$log2FoldChange<=-0.5)], rownames(df)[which(df$padj<=0.05)])
+  	key <- intersect(rownames(df)[which(df$log2FoldChange<=-1)], rownames(df)[which(df$padj<=0.05)])
 
   	results <- as.data.frame((df)[which(rownames(df) %in% key),])
   	return(results)
@@ -287,6 +287,7 @@ summary(limma::decideTests(fit2))
 ```
 
 ```{R}
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 ann450k_ranges <- makeGRangesFromDataFrame(ann450k[,1:4],
                               keep.extra.columns=T,
@@ -326,8 +327,8 @@ write.table(DMPs, "/data/TCGA-PRAD/methylation_res/DMPs.txt", sep="\t", row.name
 
 ## apply filtering
 DMP_filt <- subset(DMPs, DMPs$adj.P.Val < 0.05)
-up <- subset(DMP_filt, DMP_filt$logFC > 0.5)
-down <- subset(DMP_filt, DMP_filt$logFC < -0.5)
+up <- subset(DMP_filt, DMP_filt$logFC > 1)
+down <- subset(DMP_filt, DMP_filt$logFC < -1)
 DMP_filt <- rbind(up,down)
 
 write.table(DMP_filt, "/data/TCGA-PRAD/methylation_res/dmp_filt.txt", sep="\t", row.names = T, quote=T)
