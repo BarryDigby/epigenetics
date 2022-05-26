@@ -2,7 +2,7 @@
 
 set.seed(123)
 
-tab <- read.table("tab_all_des.txt", header=T, row.names=1, sep="\t")
+tab <- read.table("tab.txt", header=T, row.names=1, sep="\t")
 
 # split into 16 files for paralellization
 

@@ -2,7 +2,7 @@
 
 set.seed(123)
 
-pval <- read.table("pvaltab_all_des.txt", header=T, row.names=1, sep="\t")
+pval <- read.table("pvaltab.txt", header=T, row.names=1, sep="\t")
 
 # split into 16 files for paralellization
 

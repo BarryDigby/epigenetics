@@ -170,6 +170,9 @@ dds <- DESeqDataSetFromMatrix(mrna_counts, mrna_meta, design = ~ Sample.Type)
 dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
 dds <- DESeq(dds)
 resultsNames(dds)
+
+#mrna_vst <- DESeq2::varianceStabilizingTransformation(counts(dds), blind=F)
+#write.table(mrna_vst, "/data/TCGA-PRAD/mimQTLs/mrna_vst.txt", sep="\t", row.names=T, quote=F)
 ```
 
 # EDA
@@ -203,7 +206,7 @@ dev.off()
 ```
 
 ```{R}
-res <- results(dds, filterFun=ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
+res <- results(dds, filterFun=IHW::ihw, alpha=0.05, c("Sample.Type", "Tumor", "Normal"))
 lfc_res <- lfcShrink(dds=dds, res=res, coef=2, type="apeglm")
 res_df <- as.data.frame(lfc_res)
 #plotCounts(dds, "ENSG00000122133.17", intgroup = "Sample.Type") # sanity check of fold change direction.
@@ -217,19 +220,24 @@ de_genes <- rbind(up,down)
 library(biomaRt)
 mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 
-rownames(de_genes) <- sub("\\..*", "", rownames(de_genes))
+#rownames(de_genes) <- sub("\\..*", "", rownames(de_genes))
 
-info <- getBM(attributes=c("hgnc_symbol",
-                           "ensembl_gene_id",
-                           "ensembl_gene_id_version",
-                               "chromosome_name",
-                               "start_position",
-                               "end_position",
-                               "strand"),
-                  filters = c("ensembl_gene_id"),
-                  values = rownames(de_genes),
-                  mart = mart,
-                  useCache=FALSE)
+#info <- getBM(attributes=c("hgnc_symbol",
+#                           "ensembl_gene_id",
+#                           "ensembl_gene_id_version",
+#                               "chromosome_name",
+#                               "start_position",
+#                               "end_position",
+#                               "strand"),
+#                  filters = c("ensembl_gene_id_version"),
+#                  values = rownames(de_genes),
+#                  mart = mart,
+#                  useCache=T)
+
+## huge biomart issue here - will not connect. We can extract gene names for correlation analysis now and return to coordinates when we need them.
+
+```
+
 
 info$strand <- gsub("-1", "-", info$strand)
 info$strand <- gsub("1", "+", info$strand)

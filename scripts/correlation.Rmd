@@ -21,7 +21,7 @@ dds <- DESeqDataSetFromMatrix(mirna_counts, mirna_meta, design = ~ Sample.Type)
 dds$condition <- relevel(dds$Sample.Type, ref = "Normal")
 dds <- DESeq(dds)
 mirna_vst <- varianceStabilizingTransformation(counts(dds), blind = F)
-
+write.table(mirna_vst, "/data/TCGA-PRAD/mimQTLs/mirna_vst.txt", sep="\t", row.names=T, quote=F)
 mirna_counts <- as.matrix(mirna_vst[de_mirs$mirbase_id, ])
 
 #mirna_counts <- scale(mirna_counts, center = T)
@@ -184,7 +184,18 @@ tab <- tab[keep,]
 ###############################################################################
 
 ```{R, fig.height=5, fig.width=8}
+# load straight from lugh
+tab <- as.matrix(read.table("/data/TCGA-PRAD/mimQTLs/lugh/tab.txt", header=T, sep="\t"))
+dim(tab)
+colnames(tab) <- gsub("\\.", "-", colnames(tab))
+de_mirs <- read.table("/data/TCGA-PRAD/mirna_res/de_mirs.txt", header=T, sep="\t")
+keep <- !duplicated(de_mirs$mirbase_id)
+de_mirs <- de_mirs[keep,]
+dem <- read.table("/data/TCGA-PRAD/methylation_res/dmp_filt.txt", header=T, sep="\t")
+```
 
+
+```{R}
 ## add annotations you idiot xxx
 #- these are incorrectly aligned. The de mirs are not correctly annotated.
 # annot_col seems to be slapped on to miRs without any preservation
@@ -204,20 +215,45 @@ annot_row <- data.frame(row.names = row_anno$Name, Direction = factor(row_anno$d
 
 mycolors = colorRampPalette(c("blue4","white", "red4"))(n=299)
 
+load("/data/TCGA-PRAD/mimQTLs/lugh/hclust_col.RData")
+load("/data/TCGA-PRAD/mimQTLs/lugh/hclust_row.RData")
+
 # Correlation distance and average linkage
-#png("/data/TCGA-PRAD/mimQTLs/spearman_heatmap.png", width = 8, height = 5, units="in", res = 300)
-pheatmap::pheatmap(tab, clustering_distance_rows = "correlation",
-         clustering_distance_cols = "correlation",
-         clustering_method = "average",
-         cutree_rows=2, cutree_cols=5, # decide number of clusters
-         annotation_colors = annot_colors,
-         annotation_row = annot_row,
-         annotation_col = annot_col,
-         col = hcl.colors(100, "Purple-Green",rev=F),
-         show_rownames=TRUE,
-         show_colnames=TRUE)
-#dev.off()
+pdf("continuous_scale_row_spearman_heatmap.pdf", width = 8, height = 10)
+pheatmap::pheatmap(tab, clustering_distance_rows = "correlation", 
+                   clustering_distance_cols = "correlation",
+                   clustering_method = "average",
+                   annotation_colors = annot_colors,
+                   annotation_row = annot_row,
+                   annotation_col = annot_col,
+                   scale = "row",
+                   col = hcl.colors(200, "Purple-Green",rev=F),
+                   show_rownames=F,
+                   show_colnames=F)
+dev.off()
 ```
+## cop on re clusters
+
+```{R}
+test = matrix(rnorm(200), 20, 10)
+test[1:10, seq(1, 10, 2)] = test[1:10, seq(1, 10, 2)] + 3
+test[11:20, seq(2, 10, 2)] = test[11:20, seq(2, 10, 2)] + 2
+test[15:20, seq(2, 10, 2)] = test[15:20, seq(2, 10, 2)] + 4
+colnames(test) = paste("Test", 1:10, sep = "")
+rownames(test) = paste("Gene", 1:20, sep = "")
+test<-as.data.frame(test)
+
+dist_col <- as.dist(1 - cor(test))
+hcl_col <- hclust(dist_col, method = "average")
+
+dist_row <- as.dist(1 - cor(t(test)))
+hcl_row <- hclust(dist_row, method = "average")
+
+t <- as.matrix(scale(test, center=T, scale=T))
+
+pheatmap::pheatmap(t, cluster_rows = hcl_row, cluster_cols = hcl_col)
+```
+
 
 ## extract clusters
 

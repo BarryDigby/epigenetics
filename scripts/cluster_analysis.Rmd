@@ -1,0 +1,47 @@
+---
+title: "cluster_analysis"
+author: "Barry"
+date: '2022-05-25'
+output: html_document
+---
+
+```{r}
+clusters <- read.table("/data/TCGA-PRAD/mimQTLs/miRNA_clusters.txt", header=T, sep="\t")
+```
+
+# cluster A 
+
+# Hieracrchical Clustering (A)
+
+```{R}
+tab <- read.table("/data/TCGA-PRAD/miRNA_cluster/cluster_A_tab.txt")
+colnames(tab) = gsub("\\.", "-", colnames(tab))
+deg <- read.table("/data/TCGA-PRAD/mrna_res/deg_deseq2.txt", header=T, sep="\t")
+dem <- read.table("/data/TCGA-PRAD/mirna_res/de_mirs.txt", header=T, sep="\t")
+```
+
+```{R}
+col_anno <- subset(dem, dem$mirbase_id %in% colnames(tab))
+col_anno$direction <- ifelse(col_anno$log2FoldChange > 0, "Up", "Down")
+col_anno <- col_anno[!duplicated(col_anno$mirbase_id),]
+annot_col <- data.frame(row.names = col_anno$mirbase_id, Direction = factor(col_anno$direction))
+
+cols <- c("red", "blue")
+names(cols) <- c("Up", "Down")
+annot_colors <- list(Direction = cols)
+
+row_anno <- subset(deg, rownames(deg) %in% rownames(tab))
+row_anno$direction <- ifelse(row_anno$log2FoldChange > 0, "Up", "Down")
+annot_row <- data.frame(row.names = rownames(row_anno), Direction = factor(row_anno$direction))
+
+
+pheatmap::pheatmap(tab, clustering_distance_rows = "correlation", 
+                   clustering_distance_cols = "correlation",
+                   clustering_method = "average",
+                   annotation_colors = annot_colors,
+                   annotation_row = annot_row,
+                   annotation_col = annot_col,
+                   col = hcl.colors(200, "Purple-Green",rev=F),
+                   show_rownames=F,
+                   show_colnames=T)
+```
